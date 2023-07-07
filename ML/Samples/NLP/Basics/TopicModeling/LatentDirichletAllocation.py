@@ -16,7 +16,7 @@ input_file= 'c:/users/chaitanya belwal/.datasets/nlp/bbc_text_cls.csv'
 
 #nltk.download('stopwords')
 
-stopWords = set(stopwords.words('english')) #Download stop works
+stopWords = set(stopwords.words('english')) #Download stop words
 
 #Add more manual stop words
 
