@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 from keras_preprocessing.text import Tokenizer
 from keras_preprocessing.sequence import pad_sequences
 from keras.layers import Dense, Input, GlobalMaxPooling1D
-from keras.layers import Conv1D, Embedding
+from keras.layers import LSTM, GRU, SimpleRNN, Embedding
 from keras.models import Model
 from keras.losses import SparseCategoricalCrossentropy
 
@@ -58,7 +58,7 @@ data_test = pad_sequences(Xtest, maxlen=T)
 print('Shape of data test tensor:', data_test.shape)
 
 # We get to choose embedding dimensionality
-D = 50
+D = 20
 
 # Note: we actually want to the size of the embedding to (V + 1) x D,
 # because the first index starts from 1 and not 0.
@@ -67,11 +67,8 @@ D = 50
 
 i = Input(shape=(T,)) #3484 columns
 x = Embedding(V + 1, D)(i) #Embedding layers creates the word vector, depth of embedding is D
-x = Conv1D(32, 3, activation='relu')(x)
-# x = MaxPooling1D(3)(x)
-# x = Conv1D(64, 3, activation='relu')(x)
-# x = MaxPooling1D(3)(x)
-# x = Conv1D(128, 3, activation='relu')(x)
+#32 is the number of cells
+x = LSTM(32, return_sequences=True)(x) #This is the main change compared to the one using CNN
 x = GlobalMaxPooling1D()(x)
 x = Dense(K)(x)
 
@@ -88,7 +85,7 @@ print('Training model...')
 r = model.fit(
   data_train,
   df_train['targets'],
-  epochs=10,
+  epochs=2, #Very low number to complete faster
   validation_data=(data_test, df_test['targets'])
 )
 

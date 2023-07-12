@@ -4,10 +4,10 @@ import numpy as py
 
 text = ["The quick brown fox jumped over the lazy dog."]
 # create the transform
-vectorizer = CountVectorizer(lowercase=True)
+#vectorizer = CountVectorizer(lowercase=True)
 #vectorizer = CountVectorizer(analyzer="word") #word based tokenizer
 #vectorizer = CountVectorizer(analyzer="char") #char based tokenizer
-#vectorizer = CountVectorizer(stop_words = "english") #built in stop words in english define stop words
+vectorizer = CountVectorizer(stop_words = "english") #built in stop words in english define stop words
 
 '''
 #nltk library: NLTK: Natural Language ToolKit
@@ -19,8 +19,8 @@ stopwords.words('english')
 
 # tokenize and build vocab
 #vectorizer.fit() #Does not return value
-text = vectorizer.fit_transform(text)
-token = vectorizer.transform(text)
+token = vectorizer.fit_transform(text)
+#token = vectorizer.transform(text)
 print(token)
 
 # summarize
