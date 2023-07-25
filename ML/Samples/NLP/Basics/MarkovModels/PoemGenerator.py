@@ -105,7 +105,7 @@ for iline in lines_int:
 #Do not convert to log proababilities
 #sum pi's
 for k in pi.keys():
-     pi[k] = pi[k]/sumPi #Compute log probabilities
+     pi[k] = pi[k]/sumPi #Compute log probabilities/standard prob.
 
 #A1's
 for k1 in A1.keys():
