@@ -21,7 +21,7 @@ def getData(maxRows = None):
     # X = df.values[:,1:] #first column has target values
     # division by 255 is very important, else values becone nan as exponent 
     # values are close to 0 when e^(-beta * X) is taken 
-    X = data[:,1:] / 255.0 
+    X = data[:,1:] / 255.0 #Normalize
     Y = df.values[:,0]
 
     if maxRows is not None:

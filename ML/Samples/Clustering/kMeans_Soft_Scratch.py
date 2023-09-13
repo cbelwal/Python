@@ -59,7 +59,7 @@ def compute_kmeans(X, K, max_iter=20, beta=3.0, show_plots=False):
     for i in range(max_iter):
         for k in range(K):
             for n in range(N):
-                # np.exp compures e ^ x, e=2.718, 
+                # np.exp computes e ^ x, e=2.718, 
                 # since its multiplied by -beta, the higher the dotdiff, the lower the exponent value will be
                 # Hence it is important that X values are not very high as it can lead to 
                 # very very low values of exponents which makes them ~0. This will results in division by 0
