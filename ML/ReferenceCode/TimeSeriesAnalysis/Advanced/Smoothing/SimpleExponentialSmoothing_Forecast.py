@@ -1,4 +1,5 @@
-# Simple Exponential Smoothing (SES)
+# This code implements Simple Exponential Smoothing (SES)
+# non-Simple Exponential Smoothing is Holt-Winters and done in a separate Python file
 # Holt Winters forecast uses EWMA for forcasting purposes
 # y_hat_t+1 = 	α.y_t + (1 - α).y_hat_t
 # y_hat_t = prediction at time t
@@ -57,6 +58,7 @@ ses = SimpleExpSmoothing(
     initialization_method='legacy-heuristic')
 res = ses.fit()
 df['SES_fitted'] = res.fittedvalues
+# Forecast N_test time steps form the point where current data finishes
 df['SES_forecast'] = res.forecast(N_test)
 df[['Passengers','SES_fitted','SES_forecast']].plot()
 plt.show()
