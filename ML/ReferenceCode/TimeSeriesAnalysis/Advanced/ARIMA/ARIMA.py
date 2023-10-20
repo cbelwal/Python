@@ -76,6 +76,34 @@ def plot_fit_and_forecast(result,title=""):
     plt.title(title)
     plt.show()
 
+
+# This function is same as the previous one,
+# except it account for the difference term d. When difference is taken
+# the 1st d values will have value as 0 as it takes a difference with previous 
+# values and the 1st d value have no previous values. Wit 0 value the plot will show
+# as starting from 0 and then 'jump' up to the real value  
+def plot_fit_and_forecast_int(result, d, col='Passengers', title=""):
+  fig, ax = plt.subplots(figsize=(10, 5))
+  ax.plot(df[col], label='data')
+
+  # plot the curve fitted on train set
+  train_pred = result.predict(start=train.index[d], end=train.index[-1])
+
+  ax.plot(train.index[d:], train_pred, color='green', label='fitted')
+
+  # forecast the test set
+  prediction_result = result.get_forecast(Ntest)
+  conf_int = prediction_result.conf_int()
+  lower, upper = conf_int[f'lower {col}'], conf_int[f'upper {col}'] #f keyword formats the string
+  forecast = prediction_result.predicted_mean
+  ax.plot(test.index, forecast, label='forecast')
+  ax.fill_between(test.index, \
+                  lower, upper, \
+                  color='red', alpha=0.3)
+  ax.legend()
+  plt.title(title)
+  plt.show()
+
 # The plot the previous result with AR(1)
 plot_fit_and_forecast(arima_result,"AR(1)")
 
@@ -89,3 +117,35 @@ plot_fit_and_forecast(arima_result,"AR(10)")
 arima = ARIMA(train['Passengers'], order=(0,0,1)) 
 arima_result = arima.fit()
 plot_fit_and_forecast(arima_result, "MA(1)")
+
+#Create new model with (8,1,1), 1 integrated (difference of 1) ----------
+arima = ARIMA(train['Passengers'], order=(8,1,1))
+arima_result_811 = arima.fit()
+plot_fit_and_forecast_int(arima_result_811,1, title="AR(8,1,1)")
+
+#Create new model with (8,1,1), 1 integrated (difference of 1) ----------
+arima = ARIMA(train['Passengers'], order=(12,1,0))
+arima_result_1210 = arima.fit()
+plot_fit_and_forecast_int(arima_result_1210, 1, col='Passengers',title="AR(12,1,1)")
+
+#Create new model with (12,1,1), 1 integrated (difference of 1), Log values ----------
+df['Log1stDiff'] = df['LogPassengers'].diff()
+arima = ARIMA(train['LogPassengers'], order=(12,1,0))
+arima_result_log1210 = arima.fit()
+plot_fit_and_forecast_int(arima_result_log1210, 1, 
+                          col='LogPassengers',title="AR(12,1,1) with Log")
+
+# Print RMSE
+def rmse(result, is_logged):
+  forecast = result.forecast(Ntest)
+  if is_logged:
+    forecast = np.exp(forecast)
+  
+  #train/test split was done earlier
+  t = test['Passengers']
+  y = forecast
+  return np.sqrt(np.mean((t - y)**2))
+
+print("ARIMA(8,1,1):", rmse(arima_result_811, False))
+print("ARIMA(12,1,0):", rmse(arima_result_1210, False))
+print("ARIMA(12,1,0) logged:", rmse(arima_result_log1210, True))
