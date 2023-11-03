@@ -1,4 +1,4 @@
-# PACF is used for the AR (Auto Regressive) component
+# PACF is used for the AR (Auto Regressive) component - p
 # Partial autocorrelation function (PACF). At lag k, this is the correlation 
 # between series values that are k intervals apart, 
 # and accounting for the values of the intervals between.

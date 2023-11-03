@@ -1,4 +1,4 @@
-# ACF is used for the MA (Moving Average) component
+# ACF is used for the MA (Moving Average) component - q
 # At lag k, this is the correlation between 
 # series values that are k intervals apart. 
 
