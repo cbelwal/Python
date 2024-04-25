@@ -1,3 +1,5 @@
+#pip install transfomers
+
 import numpy as np
 import pandas as pd
 
