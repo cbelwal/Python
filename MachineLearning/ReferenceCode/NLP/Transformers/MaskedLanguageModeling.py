@@ -1,4 +1,6 @@
-#pip install transfomers
+# pip install transfomers
+
+# Masked Language Modeling (MLM) - also used in Article spinning
 
 import numpy as np
 import pandas as pd
