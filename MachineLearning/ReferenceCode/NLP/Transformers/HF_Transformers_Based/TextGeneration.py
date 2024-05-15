@@ -1,3 +1,5 @@
+# pip install transfomers
+
 # Text Generation using HF library
 # Built with ref. to the Transformers course in Udemy offered by TheLazyProgrammer.
 # Will use the robert_frost.txt file, available in data folder
@@ -15,6 +17,9 @@ lines = [line for line in lines if len(line) > 0]
 
 # possible model params are defined here: https://huggingface.co/models
 # with model param wll default to openai-community/gpt2 and revision 6c0e608
+# Model is stored in path: 
+# ~\.cache\huggingface\hub\models--openai-community--gpt2\snapshots\607a30d783dfa663caf39e06633721c8d4cfcd7e
+# The .safetensors file contains the model weights, while tokenzier.json and vocab.json contain the token vocab
 gen = pipeline("text-generation",model="openai-community/gpt2") 
 
 # Set seed for the transformers library

@@ -1,3 +1,5 @@
+# pip install transfomers
+
 # Sentiment analysis using HF library
 # Built with ref. to the Transformers course in Udemy offered by TheLazyProgrammer.
 
