@@ -57,7 +57,7 @@ tokenized_sentences = tokenizer(raw_datasets['train'][0:3]['sentence'])
 print("Tokens:", tokenized_sentences) 
 
 # This function is used by the map function
-# define what is truncation
+# Truncation sets a max limit on size
 def tokenize_fn(batch):
   return tokenizer(batch['sentence'], truncation=True)
 
@@ -168,7 +168,7 @@ trainer.save_model(homeDir + '\\Models\\fine_tuned_distelbert')
 #------------ End Comment
 '''
 
-# Now we can use our model ia a pipepline
+# Now we can use our model via a pipepline
 from transformers import pipeline, AutoModel
 
 # Since path cannot be specified in the pipeline directly
