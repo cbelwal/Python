@@ -1,7 +1,3 @@
-# This is similar to: FineTuning_SentimentAnalysis_CustomDS.py
-# except here we are using the config object to set the proper lable names
-# and not use LABEL_0 and LABEL_1
-#
 # Will do sentiment analysis on a custom dataset
 #
 # This is similar to the SA task on GLUE data set, except this one
@@ -59,7 +55,7 @@ tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 tokenized_sentences = tokenizer(dataSplit['train'][0:3]['sentence'])
 
 # Print the tokenized output
-# This will include only the attention_masks and the token ids (input_ids)
+# This will include only the attention_asks and the token_ids
 print("Sample Tokens:", tokenized_sentences) 
 
 # This function is used by the map function
@@ -74,20 +70,7 @@ def tokenize_fn(batch):
 # map() will call tokenize_fn() for multiple rows of data
 tokenized_datasets = dataSplit.map(tokenize_fn, batched=True)
 
-from transformers import Trainer,TrainingArguments, AutoConfig
-
-# This command will load the config. params
-config = AutoConfig.from_pretrained(checkpoint)
-print("Current config setup id2label:",config.id2label)
-
-# target_map = {'positive': 1, 'negative': 0, 'neutral': 2}
-# After execution of code output will be:
-# Current config setup id2label: {0: 'LABEL_0', 1: 'LABEL_1'}
-# After modification setup id2label: {1: 'positive', 0: 'negative', 2: 'neutral'}
-config.id2label = {v:k for k, v in target_map.items()}
-config.label2id = target_map
-print("After modification setup id2label:",config.id2label)
-# After model training verify output in config.json inside the model
+from transformers import Trainer,TrainingArguments
 
 # Specify values for the training arguements class
 training_args = TrainingArguments(
@@ -111,8 +94,9 @@ from transformers import AutoModelForSequenceClassification, pipeline
 # distilbert is a shorter version of BERT
 # BERT Base has 110 million params
 model = AutoModelForSequenceClassification.from_pretrained(
-    checkpoint, config=config) # Specify the updated config here, no need to specify labels as config contains it
-    
+    checkpoint,
+    num_labels=3) # Note that there are 3 labels here, compared to 2 previously.
+
 # summary class is used to give more information on the model
 from torchinfo import summary
 
@@ -143,7 +127,7 @@ trainer = Trainer(
     compute_metrics=compute_metrics,
     )
 
-modelPath = homeDir + '\\Models\\fine_tuned_distelbert_custom_config'
+modelPath = homeDir + '\\Models\\fine_tuned_distelbert_custom'
 # Do the training -> will result in updated weights
 #print("Starting Model training ...")
 # Training is taking ~ 1hr10 mins in CPU
@@ -152,7 +136,7 @@ modelPath = homeDir + '\\Models\\fine_tuned_distelbert_custom_config'
 # 'training_dir' in the root folder. The folder is named after the number of 
 # training steps
 #
-trainer.train()
+# trainer.train()
 
 # Save the model in folder 'fine_tuned_distelbert_model'
 # NOTE: Once the model is trained persist it so training is not
