@@ -28,11 +28,12 @@ class MultiHeadAttention(nn.Module):
     self.value = nn.Linear(d_model, d_k * n_heads)
 
     # final linear layer
-    # The output for the final later is equal to embedding size
+    # The output for the final layer is equal to embedding size
     # The nn.linear adds trainable weights
     self.fc = nn.Linear(d_k * n_heads, d_model)
 
   def forward(self, q, k, v, mask=None):
+    # pass through the nn layers
     q = self.query(q) # N x T x (hd_k)
     k = self.key(k)   # N x T x (hd_k)
     v = self.value(v) # N x T x (hd_v)
