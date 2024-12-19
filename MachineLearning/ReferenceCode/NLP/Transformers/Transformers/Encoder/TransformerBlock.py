@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-import MultiHeadAttention
+from MultiHeadAttention import MultiHeadAttention
 
 """
 NCHW is an acronym describing the order of the axes in a tensor containing image data samples.

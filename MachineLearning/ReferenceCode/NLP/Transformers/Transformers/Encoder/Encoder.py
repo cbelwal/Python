@@ -1,7 +1,7 @@
 import torch.nn as nn
-
-import PositionalEncoding
-import TransformerBlock
+import import_ipynb
+from PositionalEncoding import PositionalEncoding
+from TransformerBlock import TransformerBlock
 
 class Encoder(nn.Module):
   def __init__(self,
@@ -15,10 +15,10 @@ class Encoder(nn.Module):
                dropout_prob):
     super().__init__()
 
-    #vocab_size = 20,000
-    #max_len = 1024
-    #d_k = 16
-    #d_model = 64
+    # vocab_size = 20,000
+    # max_len = 1024
+    # d_k = 16
+    # d_model = 64
     self.embedding = nn.Embedding(vocab_size, d_model)
     self.pos_encoding = PositionalEncoding(d_model, max_len, dropout_prob)
     transformer_blocks = [

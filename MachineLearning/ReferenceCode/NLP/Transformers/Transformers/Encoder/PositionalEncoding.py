@@ -17,8 +17,9 @@ class PositionalEncoding(nn.Module):
     # Returns a 1-D tensor of size ⌈end−start/step⌉ with values from the 
     # interval [start, end) taken with common difference step beginning from start.
     # eg. if d_model = 6, exp_term = [0,2,4]
-    d_model = 6
-    max_len = 2
+    #--------- Temp
+    #d_model = 6
+    #max_len = 2
     exp_term = torch.arange(0, d_model, 2)
     
     # div_term gives different frequencies
