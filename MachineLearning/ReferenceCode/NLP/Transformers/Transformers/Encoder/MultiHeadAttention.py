@@ -39,6 +39,7 @@ class MultiHeadAttention(nn.Module):
   # N - batch size
   # T - sequence length (number of tokens in a sentence)
   def forward(self, q, k, v, mask=None):
+    # Size of q, k, v: N x T x D, for first data: (1,10,64)
     # pass through the nn layers
     q = self.query(q) # N x T x (hd_k), (1,10,64)
     k = self.key(k)   # N x T x (hd_k)
@@ -50,14 +51,29 @@ class MultiHeadAttention(nn.Module):
     # change the shape to:
     # (N, T, h, d_k) -> (N, h, T, d_k)
     # in order for matrix multiply to work properly
-    q = q.view(N, T, self.n_heads, self.d_k).transpose(1, 2)
+    # tensor.view(): Returns a new tensor with the same data as the self tensor but of a different shape.
+    # e.g.: 
+    # a = torch.range(1, 16)
+    # To reshape this tensor to make it a 4 x 4 tensor, use:
+    # a = a.view(4, 4)
+    # Now a will be a 4 x 4 tensor. Note that after the reshape the total number of elements need to remain the same. 
+    # Reshaping the tensor to a 3 x 5 tensor would not be appropriate.
+    # for the (1,10,64) tensor: .view() will change it to:
+    #  (1,10,4,16) and then .transpose() will change it to:
+    #  (1,4,10,16)
+    q = q.view(N, T, self.n_heads, self.d_k) # non-verbrose for testing purposes
+    q = q.transpose(1, 2) # Note: d_v = d_k
     k = k.view(N, T, self.n_heads, self.d_k).transpose(1, 2)
     v = v.view(N, T, self.n_heads, self.d_k).transpose(1, 2)
 
     # compute attention weights
     # (N, h, T, d_k) x (N, h, d_k, T) --> (N, h, T, T)
     # @ is a PyTorch Matrix multiplication operator
-    attn_scores = q @ k.transpose(-2, -1) / math.sqrt(self.d_k)
+    # Transpose (-2,-1) means that the last two dimensions are swapped
+    k = k.transpose(-2, -1)
+    attn_scores = q @ k / math.sqrt(self.d_k)
+    
+    # attn_scores = (1,4,10,10)
     if mask is not None:
       attn_scores = attn_scores.masked_fill(
           mask[:, None, None, :] == 0, float('-inf'))

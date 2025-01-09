@@ -32,8 +32,8 @@ class Encoder(nn.Module):
     self.fc = nn.Linear(d_model, n_classes)
   
   def forward(self, x, mask=None):
-    x = self.embedding(x)
-    x = self.pos_encoding(x)
+    x = self.embedding(x) # x Shape = (1,10)
+    x = self.pos_encoding(x) # x Shape = (1,10,64)
     for block in self.transformer_blocks:
       x = block(x, mask)
 
