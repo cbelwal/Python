@@ -16,7 +16,7 @@ class Encoder(nn.Module):
     super().__init__()
 
     # vocab_size = 20,000
-    # max_len = 1024
+    # max_len = 512
     # d_k = 16
     # d_model = 64
     self.embedding = nn.Embedding(vocab_size, d_model)

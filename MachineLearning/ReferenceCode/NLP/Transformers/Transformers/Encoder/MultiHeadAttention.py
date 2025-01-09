@@ -14,6 +14,10 @@ import torch.nn.functional as F
 # In Vaswani:
 # d_model: 512
 # n_heads = 8, d_k = d_v = d_model/n_heads = 64
+# Current desc:
+#   d_k = 16,    
+#   d_model=64,
+#   n_heads=4,
 class MultiHeadAttention(nn.Module):
   def __init__(self, d_k, d_model, n_heads):
     super().__init__()
@@ -32,9 +36,11 @@ class MultiHeadAttention(nn.Module):
     # The nn.linear adds trainable weights
     self.fc = nn.Linear(d_k * n_heads, d_model)
 
+  # N - batch size
+  # T - sequence length (number of tokens in a sentence)
   def forward(self, q, k, v, mask=None):
     # pass through the nn layers
-    q = self.query(q) # N x T x (hd_k)
+    q = self.query(q) # N x T x (hd_k), (1,10,64)
     k = self.key(k)   # N x T x (hd_k)
     v = self.value(v) # N x T x (hd_v)
 

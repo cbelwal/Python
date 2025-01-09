@@ -32,9 +32,9 @@ class PositionalEncoding(nn.Module):
     # will allocate a tensor of dimensions max_len, d_model 
     pe = torch.zeros(1, max_len, d_model)
 
-    # Follow the format start:stop:step]
-    # with 0::2: Start from 0 till end and assign indexes at step 2: 0,2,4,5
-    # with 1::2: Start from 1 till end and assign indexes at step 2: 1,3,5,7
+    # Follow the format start:stop:step for each index]
+    # with 0::2 - Start from 0 till end and assign indexes at step 2: 0,2,4,5
+    # with 1::2 - Start from 1 till end and assign indexes at step 2: 1,3,5,7
     # This matches up with the size of exp_term
     # position is a scalar with values from 0 
     pe[0, :, 0::2] = torch.sin(position * div_term)
@@ -51,8 +51,8 @@ class PositionalEncoding(nn.Module):
     self.register_buffer('pe', pe)
 
   def forward(self, x):
-    # x.shape: N x T x D
-    x = x + self.pe[:, :x.size(1), :]
+    # x.shape: N x T x D, for first data: (1,10,64)
+    x = x + self.pe[:, :x.size(1), :] # (1,512,64), x.size(1)=
     return self.dropout(x)
 
 if __name__ == "__main__":
