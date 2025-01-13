@@ -6,3 +6,20 @@ The sample code has been either been developed from scratch or has been implemen
 
 For the Udemy courses majority of the code in NLP is from courses taught by the 'thelazyprogrammer' who, in my opinion, goes deep into the concepts and gives a very good coverage of both theoretical and practical aspects. He is my favorite instructor in Udemy. 
 
+
+**Setting up Python venv
+
+
+
+**CUDA Install Notes**
+1. Uninstall current torch
+
+pip uninstall torch
+
+2. Install torch with CUDA:
+
+Latest torch version:
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+
+torchtect only with torch 2.2.2 so change according, reduce cuda version also:
+pip3 install torch==2.2.2 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121

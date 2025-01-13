@@ -63,28 +63,34 @@ class MultiHeadAttention(nn.Module):
     #  (1,4,10,16)
     q = q.view(N, T, self.n_heads, self.d_k) # non-verbrose for testing purposes
     q = q.transpose(1, 2) # Note: d_v = d_k
-    k = k.view(N, T, self.n_heads, self.d_k).transpose(1, 2)
-    v = v.view(N, T, self.n_heads, self.d_k).transpose(1, 2)
+    k = k.view(N, T, self.n_heads, self.d_k).transpose(1, 2) # (1,4,10,16)
+    v = v.view(N, T, self.n_heads, self.d_k).transpose(1, 2) # (1,4,10,16)
 
     # compute attention weights
     # (N, h, T, d_k) x (N, h, d_k, T) --> (N, h, T, T)
     # @ is a PyTorch Matrix multiplication operator
     # Transpose (-2,-1) means that the last two dimensions are swapped
-    k = k.transpose(-2, -1)
-    attn_scores = q @ k / math.sqrt(self.d_k)
-    
-    # attn_scores = (1,4,10,10)
+    k = k.transpose(-2, -1) # (1,4,10,16) -> (1,4,16,10)
+    # This is doing the dot(.) product between query and keys, and normalizing it by the square root of the dimension of the key
+    # The . product will give the highest values for the keys that are most similar to the query
+    # There are total T tokens. So each token will have a T scores to represention attention
+    # Hence the score matrix will be TxT to represent the attention scores, and then since there  
+    # are h attention heads, the final score matrix will be h x TxT
+    attn_scores = q @ k / math.sqrt(self.d_k) # attn_scores shape = (1,4,10,10)
     if mask is not None:
       attn_scores = attn_scores.masked_fill(
           mask[:, None, None, :] == 0, float('-inf'))
-    attn_weights = F.softmax(attn_scores, dim=-1)
+    # Do a softmax on the last dimension to get the attention weights
+    # attention weights will be highest for the keys that are most similar to the query
+    attn_weights = F.softmax(attn_scores, dim=-1) # (N,H,T,T)
     
     # compute attention-weighted values
     # (N, h, T, T) x (N, h, T, d_k) --> (N, h, T, d_k)
+    # New values are computed at this point
     A = attn_weights @ v
 
     # reshape it back before final linear layer
-    A = A.transpose(1, 2) # (N, T, h, d_k)
+    A = A.transpose(1, 2) # (N, h, T, d_k) -> (N, T, h, d_k)
     A = A.contiguous().view(N, T, self.d_k * self.n_heads) # (N, T, h*d_k)
 
     # projection
