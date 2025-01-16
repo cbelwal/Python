@@ -48,8 +48,7 @@ class MultiHeadAttention(nn.Module):
     N = q.shape[0]
     T = q.shape[1]
 
-    # change the shape to:
-    # (N, T, h, d_k) -> (N, h, T, d_k)
+  
     # in order for matrix multiply to work properly
     # tensor.view(): Returns a new tensor with the same data as the self tensor but of a different shape.
     # e.g.: 
@@ -59,9 +58,10 @@ class MultiHeadAttention(nn.Module):
     # Now a will be a 4 x 4 tensor. Note that after the reshape the total number of elements need to remain the same. 
     # Reshaping the tensor to a 3 x 5 tensor would not be appropriate.
     # for the (1,10,64) tensor: .view() will change it to:
-    #  (1,10,4,16) and then .transpose() will change it to:
+    #  (1,10,4,16) and then later .transpose() will change it to:
     #  (1,4,10,16)
     q = q.view(N, T, self.n_heads, self.d_k) # non-verbrose for testing purposes
+    # change the shape to: (N, T, h, d_k) -> (N, h, T, d_k)
     q = q.transpose(1, 2) # Note: d_v = d_k
     k = k.view(N, T, self.n_heads, self.d_k).transpose(1, 2) # (1,4,10,16)
     v = v.view(N, T, self.n_heads, self.d_k).transpose(1, 2) # (1,4,10,16)
@@ -75,7 +75,11 @@ class MultiHeadAttention(nn.Module):
     # The . product will give the highest values for the keys that are most similar to the query
     # There are total T tokens. So each token will have a T scores to represention attention
     # Hence the score matrix will be TxT to represent the attention scores, and then since there  
-    # are h attention heads, the final score matrix will be h x TxT
+    # are h attention heads, the final score matrix will be h x T x T
+    # Division operation is also called *scaled dot product attention*
+    # Scaling insures the values are not too extrmes
+    # Scaling is also done in weight initialization for all NNs such that the  
+    # variance is 1 and the values are not too extreme
     attn_scores = q @ k / math.sqrt(self.d_k) # attn_scores shape = (1,4,10,10)
     if mask is not None:
       attn_scores = attn_scores.masked_fill(

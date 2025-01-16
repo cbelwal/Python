@@ -20,7 +20,16 @@ class TransformerBlock(nn.Module):
 
     # torch.nn.LayerNorm(normalized_shape, eps=1e-05, elementwise_affine=True, bias=True, device=None, dtype=None)
     # LayerNorm defined here: https://arxiv.org/abs/1607.06450
-    # Layer normalization does not have weights and not used for training 
+    #
+    # Layer normalization does not have weights and not used for training, it just updates the inputs to the next layer
+    #  
+    # Layer normalize will compute the mean and variance of the each singular output (in the batch) 
+    # of layer N, then normalize the values such that the input to layer N+1 is normalized 
+    # 
+    # Layer and batch normalization are similar in that they normalize the combined values of wx + b
+    #
+    # This is different than batch normalization 
+    # where the mean and variance are computed across all values in the batch.
     self.ln1 = nn.LayerNorm(d_model)
     self.ln2 = nn.LayerNorm(d_model)
     self.mha = MultiHeadAttention(d_k, d_model, n_heads)
