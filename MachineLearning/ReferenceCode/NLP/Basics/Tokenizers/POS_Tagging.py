@@ -4,7 +4,9 @@ import nltk
 from nltk.corpus import wordnet
 #nltk.download("averaged_perceptron_tagger")
 
-sentence = "Sample sentence tp help better understand".split()
+#sentence = "Sample sentence tp help better understand".split()
+sentence = "Give me information on defender incident 123".split()
+sentence = "Give me information on UPN cbelwal@microsoft.com".split()
 words_and_tags = nltk.pos_tag(sentence)
 print("POS tagging of the above words:")
 print(words_and_tags) #Will assign where they are noun, adjectives etc

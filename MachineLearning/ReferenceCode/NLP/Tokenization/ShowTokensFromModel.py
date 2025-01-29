@@ -35,6 +35,8 @@ if(args.Text):
 else:
     textToEncode = "This is the default text to encode"
 
+textToEncode = "Give me information on UPN 'cbelwal'"
+
 tokens = encoding.encode(textToEncode)
 
 print("Number of Tokens:",len(tokens))

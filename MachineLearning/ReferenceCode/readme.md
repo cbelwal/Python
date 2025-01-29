@@ -9,7 +9,16 @@ For the Udemy courses majority of the code in NLP is from courses taught by the 
 
 **Setting up Python venv
 
-
+# Steps to create a venv:
+1. Run: py -m venv .venv
+2. Run: .venv\Scripts\activate
+3. Run to verify: where python
+4. Run to upgrade pip: py -m pip install --upgrade pip
+# Other Commands:
+To deactivate venv: deactivate
+Install from Requirements: pip install -r .\requirements.txt
+To select specific Python Environment:
+Goto View -> Command Palette -> Python: Select Interpreter
 
 **CUDA Install Notes**
 1. Uninstall current torch
