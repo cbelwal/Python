@@ -1,3 +1,9 @@
 .venv/
-MachineLearning/ReferenceCode/NLP/Transformers/training_dir/
+MachineLearning/ReferenceCode/NLP/Transformers/training_dir/**
+**/checkpoint*
+**/*.bin
+**/*.safetensors
+**/*.json
+**/events.*
+
 
