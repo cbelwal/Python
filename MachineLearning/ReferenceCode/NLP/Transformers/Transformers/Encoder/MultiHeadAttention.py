@@ -36,8 +36,9 @@ class MultiHeadAttention(nn.Module):
     # The nn.linear adds trainable weights
     self.fc = nn.Linear(d_k * n_heads, d_model)
 
-  # N - batch size
+  # N - batch size 
   # T - sequence length (number of tokens in a sentence)
+  # Executed by the function: self.ln1(x + self.mha(x, x, x, mask))
   def forward(self, q, k, v, mask=None):
     # Size of q, k, v: N x T x D, for first data: (1,10,64)
     # pass through the nn layers
@@ -48,16 +49,15 @@ class MultiHeadAttention(nn.Module):
     N = q.shape[0]
     T = q.shape[1]
 
-  
-    # in order for matrix multiply to work properly
-    # tensor.view(): Returns a new tensor with the same data as the self tensor but of a different shape.
+      # in order for matrix multiply to work properly
+    # tensor.view(): Returns a new tensor with the same data as the orig. tensor but of a different shape.
     # e.g.: 
     # a = torch.range(1, 16)
     # To reshape this tensor to make it a 4 x 4 tensor, use:
     # a = a.view(4, 4)
-    # Now a will be a 4 x 4 tensor. Note that after the reshape the total number of elements need to remain the same. 
+    # Now 'a' will be a 4 x 4 tensor. Note that after the reshape the total number of elements need to remain the same. 
     # Reshaping the tensor to a 3 x 5 tensor would not be appropriate.
-    # for the (1,10,64) tensor: .view() will change it to:
+    # for the (1,10,64) tensor: .view(N, T, self.n_heads, self.d_k) will change it to:
     #  (1,10,4,16) and then later .transpose() will change it to:
     #  (1,4,10,16)
     q = q.view(N, T, self.n_heads, self.d_k) # non-verbrose for testing purposes
@@ -67,6 +67,7 @@ class MultiHeadAttention(nn.Module):
     v = v.view(N, T, self.n_heads, self.d_k).transpose(1, 2) # (1,4,10,16)
 
     # compute attention weights
+    # N: Batch size
     # (N, h, T, d_k) x (N, h, d_k, T) --> (N, h, T, T)
     # @ is a PyTorch Matrix multiplication operator
     # Transpose (-2,-1) means that the last two dimensions are swapped

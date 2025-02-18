@@ -44,6 +44,7 @@ class TransformerBlock(nn.Module):
   def forward(self, x, mask=None):
     # The following 2 steps are the two Add & Norm ops defined in
     # Fig. 1 of Vaswani et al.
+    # self attention has only x as input
     x = self.ln1(x + self.mha(x, x, x, mask))
     x = self.ln2(x + self.ann(x))
     x = self.dropout(x)

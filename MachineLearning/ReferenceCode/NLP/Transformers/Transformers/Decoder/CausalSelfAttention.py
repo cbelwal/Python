@@ -3,6 +3,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# This is also know as masked self-attention
+# It is causal as it requires the model to only look at the past
+# Causality will imply to adjust the attention weights matrix to not look at the future
+# 
+# To accomplish this, we need to make sure that the attention weights matrix is lower triangular
+# or for a cell A(i,j), which is how much token i should pay attention to token j 
+# should have value 0 if i < j (or when i comes before j)
+# and value != 0 when i >= j (or when i comes after j)
+#  
+# This is accomplished by using a causal which is a lower triangular matrix
+# as the lower triangular matrix will have 0s in the upper triangle 
 class CausalSelfAttention(nn.Module):
   def __init__(self, d_k, d_model, n_heads, max_len):
     super().__init__()
@@ -21,9 +32,16 @@ class CausalSelfAttention(nn.Module):
     # causal mask
     # make it so that diagonal is 0 too
     # this way we don't have to shift the inputs to make targets
+    # torch.tril: Returns the lower triangular part of the matrix (2-D tensor) with the elements above the diagonal set to 0.
     cm = torch.tril(torch.ones(max_len, max_len))
+    # register_buffer: Adds a persistent buffer to the module.
+    # register_buffer is PyTorch’s way of letting you store non-trainable 
+    # tensors within a model, which are not used in weight updates
+    #
+    # register_buffer(name, tensor, persistent=True): the name of the variable is not part of the module
     self.register_buffer(
-        "causal_mask",
+        "causal_mask", # Name of variable
+        # .view changes the dimensions of the tensor
         cm.view(1, 1, max_len, max_len)
     )
 
@@ -48,8 +66,12 @@ class CausalSelfAttention(nn.Module):
     if pad_mask is not None:
       attn_scores = attn_scores.masked_fill(
           pad_mask[:, None, None, :] == 0, float('-inf'))
+    
+    # Tensor.masked_fill_(mask, value)
+    # Fills elements of self tensor with value where mask is True.
+    # 'causal_mask' is defined in the constructor in register buffer
     attn_scores = attn_scores.masked_fill(
-        self.causal_mask[:, :, :T, :T] == 0, float('-inf'))
+        self.causal_mask[:, :, :T, :T] == 0, float('-inf')) 
     attn_weights = F.softmax(attn_scores, dim=-1)
     
     # compute attention-weighted values

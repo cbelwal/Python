@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from Transformers.Decoder.CausalSelfAttention import CausalSelfAttention
+from CausalSelfAttention import CausalSelfAttention
 
 class TransformerBlock(nn.Module):
   def __init__(self, d_k, d_model, n_heads, max_len, dropout_prob=0.1):
@@ -18,6 +18,7 @@ class TransformerBlock(nn.Module):
     )
     self.dropout = nn.Dropout(p=dropout_prob)
   
+  # self attention has only x as input
   def forward(self, x, pad_mask=None):
     x = self.ln1(x + self.mha(x, x, x, pad_mask))
     x = self.ln2(x + self.ann(x))
