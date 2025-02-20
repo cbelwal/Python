@@ -35,7 +35,7 @@ if(args.Text):
 else:
     textToEncode = "This is the default text to encode"
 
-textToEncode = "Give me information on UPN 'cbelwal'"
+textToEncode = "Give me information on UPN MyDeviceName"
 
 tokens = encoding.encode(textToEncode)
 

@@ -13,3 +13,8 @@ class StemTokenizer:
     for t in tokens:
         result.append(self.porter.stem(t))
     return result
+  
+
+if __name__ == "__main__":
+  stemmer = StemTokenizer()
+  print(stemmer("I am running"))
