@@ -177,7 +177,6 @@ A good house is black.
 The good cat is black.
 It is a good house.
 The cat jumps over the good house.
-The over-active cat is black.
 A house is not good for the cat.
 The cat is good at jumping.
 The cat is jumping.
@@ -205,7 +204,6 @@ The good cat always jumps.
 It is jumping over the black cat.
 Good cats jump high.
 The house is not a good place for the cat.
-The cat, it jumps over the wall of the house.
 The cat loves to jump over the house.
 A good jump is what the cat likes.
 It is good when the cat jumps.
