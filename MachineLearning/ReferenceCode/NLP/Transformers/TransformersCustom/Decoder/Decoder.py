@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from PositionalEncoding import PositionalEncoding
 from TransformerBlock import TransformerBlock
 
+
 # N - batch size 
 # T - sequence length (number of tokens in a sentence)
 # V - vocab size
