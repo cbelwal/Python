@@ -4,14 +4,12 @@ class CCustomTokenizer:
         self.fileName = fileName
         self.wordToTokenId = {}
         self.tokenIdToWord = {}
-        self.specialTokenEndIdx = 4
+        self.regularTokenStartIdx = 100 # Anything below this is reserved for special tokens
         self.maxLen = 0
         self.allLines = []
         self.assignSpecialTokens()
         self.generateTokens()
         
-
-
     def read_file(self):
         with open(self.fileName, 'r') as file:
             return file.readlines()
@@ -30,9 +28,12 @@ class CCustomTokenizer:
         self.wordToTokenId["UNK"] = self.unkToken
         self.tokenIdToWord[self.unkToken] = "UNK"
 
+    def getPadTokenId(self):
+        return self.padToken
+
     def generateTokens(self):
         allRawLines = self.read_file()
-        idx = self.specialTokenEndIdx + 1
+        idx = self.regularTokenStartIdx + 1
         for line in allRawLines:
             if line.strip() == "":
                 continue
