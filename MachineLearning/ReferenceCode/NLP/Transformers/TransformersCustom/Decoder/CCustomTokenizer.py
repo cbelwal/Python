@@ -41,10 +41,10 @@ class CCustomTokenizer:
     def generateTokens(self):
         allRawLines = self.read_file()
         tokenId = self.regularTokenStartIdx + 1
+        idx = 0 # Mainly for use to get the logits index
         for line in allRawLines:
             if line.strip() == "":
                 continue
-            
             # Remove special characters
             line = line.replace("\n", "")
             line = line.replace("\r","")
@@ -57,7 +57,6 @@ class CCustomTokenizer:
             if(len(words) > self.maxLen):
                 self.maxLen = len(words)
 
-            idx = 0 # Mainly for use to get the logits index
             for word in words:
                 if word not in self.wordToTokenId:
                     self.wordToTokenId[word] = tokenId
@@ -65,7 +64,7 @@ class CCustomTokenizer:
                     self.tokenIdxToTokenId[idx] = tokenId
                     idx += 1
                     tokenId += 1
-            self.maxTokenId = tokenId
+        self.maxTokenId = tokenId
 
     def getMaxLen(self):
         return self.maxLen + 2 # For CLS and SEP tokens
@@ -85,6 +84,17 @@ class CCustomTokenizer:
     def getTokenIdForWord(self, word):
         return self.wordToTokenId[word]
 
+    '''
+    Takes in a list of idxs and returns list of token ids
+    
+    The idxs comes from the logits of the model
+    '''
+    def getTokenIdsForIdxs(self, idxs):
+        tokenIds = []
+        for idx in idxs:
+            tokenIds.append(self.getTokenIdforIdx(idx))
+        return tokenIds
+    
     def encodeTokenizedSentence(self, sentence,maxLen=None):
         if maxLen is None:
             maxLen = self.getMaxLen()
