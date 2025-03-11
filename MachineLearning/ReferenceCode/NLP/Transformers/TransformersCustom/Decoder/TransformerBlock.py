@@ -24,3 +24,8 @@ class TransformerBlock(nn.Module):
     x = self.ln2(x + self.ann(x))
     x = self.dropout(x)
     return x
+  
+  def getParamCount(self):
+    count = sum(p.numel() for p in self.parameters() if p.requires_grad) 
+    count += self.mha.getParamCount()
+    return count

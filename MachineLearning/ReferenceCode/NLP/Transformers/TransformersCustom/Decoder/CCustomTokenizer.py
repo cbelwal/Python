@@ -7,11 +7,9 @@ class CCustomTokenizer:
         self.tokenIdxToTokenId = {}
         # Do not set this to higher values as the vocab size in nn.embeddings layer
         # is based on the index
-        self.regularTokenStartIdx = 5 # Anything below this is reserved for special tokens
         self.maxLen = 0
         self.maxTokenId = 0
         self.allLines = []
-        self.assignSpecialTokens()
         self.generateTokens()
         
     def read_file(self):
@@ -19,28 +17,31 @@ class CCustomTokenizer:
             return file.readlines()
     
     def assignSpecialTokens(self):
-        self.startToken = 1
-        self.sepToken = 2
-        self.padToken = 0
-        self.unkToken = 3
-        self.wordToTokenId["CLS"] = self.startToken
-        self.tokenIdToWord[self.startToken] = "CLS"
-        self.wordToTokenId["SEP"] = self.sepToken
-        self.tokenIdToWord[self.sepToken] = "SEP"
-        self.wordToTokenId["PAD"] = self.padToken
-        self.tokenIdToWord[self.padToken] = "PAD"
-        self.wordToTokenId["UNK"] = self.unkToken
-        self.tokenIdToWord[self.unkToken] = "UNK"
+        self.padTokenId = 0;self.padToken = "<PAD>"
+        self.startTokenId = 1; self.startToken= "<CLS>"
+        self.sepTokenId = 2; self.sepToken = "<SEP>"    
+        self.unkTokenId = 3; self.unkToken = "<UNK>"
+        self.tokenIdToWord[self.startTokenId] = self.startToken
+        self.wordToTokenId[self.tokenIdToWord[self.startTokenId]] = self.startTokenId
+        self.tokenIdToWord[self.sepTokenId] = self.sepToken
+        self.wordToTokenId[self.tokenIdToWord[self.sepTokenId]] = self.sepTokenId
+        self.tokenIdToWord[self.padTokenId] = self.padToken
+        self.wordToTokenId[self.tokenIdToWord[self.padTokenId]] = self.padTokenId
+        self.tokenIdToWord[self.unkTokenId] = self.unkToken
+        self.wordToTokenId[self.tokenIdToWord[self.unkTokenId]] = self.unkTokenId
+        
 
     def getPadTokenId(self):
-        return self.padToken
+        return self.padTokenId
 
     def getSepTokenId(self):
-        return self.sepToken
+        return self.sepTokenId
 
     def generateTokens(self):
+        self.assignSpecialTokens()
+        tokenId = len(self.tokenIdToWord) # start right after special tokens
         allRawLines = self.read_file()
-        tokenId = self.regularTokenStartIdx + 1
+         
         idx = 0 # Mainly for use to get the logits index
         for line in allRawLines:
             if line.strip() == "":
@@ -61,10 +62,18 @@ class CCustomTokenizer:
                 if word not in self.wordToTokenId:
                     self.wordToTokenId[word] = tokenId
                     self.tokenIdToWord[tokenId] = word
-                    self.tokenIdxToTokenId[idx] = tokenId
                     idx += 1
                     tokenId += 1
-        self.maxTokenId = tokenId
+            self.maxTokenId = tokenId     
+        
+        # assign the tokenIdx to tokenId for all tokens
+        # its important to do it at this stage after both special and normal
+        # tokens are assigned
+        idx = 0
+        for tokenId in self.tokenIdToWord:
+            self.tokenIdxToTokenId[idx] = tokenId
+            idx += 1
+        
 
     def getMaxLen(self):
         return self.maxLen + 2 # For CLS and SEP tokens
@@ -75,8 +84,8 @@ class CCustomTokenizer:
     def getVocabSize(self):
         return len(self.wordToTokenId)
 
-    def getTokenIdforIdx(self, idx):
-        return self.tokenIdxToTokenId[idx]
+    #def getTokenIdforIdx(self, idx):
+    #    return self.tokenIdxToTokenId[idx]
 
     def getWordForTokenId(self, tokenId):
         return self.tokenIdToWord[tokenId]
@@ -95,20 +104,21 @@ class CCustomTokenizer:
             tokenIds.append(self.getTokenIdforIdx(idx))
         return tokenIds
     
+    # Return tokenid encoded sentences with special tokens
     def encodeTokenizedSentence(self, sentence,maxLen=None):
         if maxLen is None:
             maxLen = self.getMaxLen()
         words = sentence.split(' ')
         tokens = []
-        tokens.append(self.getTokenIdForWord("CLS"))
+        tokens.append(self.getTokenIdForWord(self.startToken))
         for word in words:
             tokens.append(self.getTokenIdForWord(word))
-        tokens.append(self.getTokenIdForWord("SEP"))
+        tokens.append(self.getTokenIdForWord(self.sepToken))
         
         # Pad the sentence
         if len(tokens) < maxLen:
             for i in range(maxLen - len(tokens)):
-                tokens.append(self.getTokenIdForWord("PAD"))
+                tokens.append(self.getTokenIdForWord(self.padToken))
 
         return tokens
     

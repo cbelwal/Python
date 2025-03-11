@@ -84,3 +84,6 @@ class CausalSelfAttention(nn.Module):
 
     # projection
     return self.fc(A)
+  
+  def getParamCount(self):
+    return sum(p.numel() for p in self.parameters() if p.requires_grad) 
