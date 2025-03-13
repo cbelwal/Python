@@ -105,9 +105,8 @@ class CCustomTokenizer:
         return tokenIds
     
     # Return tokenid encoded sentences with special tokens
-    def encodeTokenizedSentence(self, sentence,maxLen=None):
-        if maxLen is None:
-            maxLen = self.getMaxLen()
+    def encode(self, sentence,addPadding=False,maxLen=None):
+        
         words = sentence.split(' ')
         tokens = []
         tokens.append(self.getTokenIdForWord(self.startToken))
@@ -116,13 +115,16 @@ class CCustomTokenizer:
         tokens.append(self.getTokenIdForWord(self.sepToken))
         
         # Pad the sentence
-        if len(tokens) < maxLen:
-            for i in range(maxLen - len(tokens)):
-                tokens.append(self.getTokenIdForWord(self.padToken))
+        if(addPadding):
+            if maxLen is None:
+                maxLen = self.getMaxLen()
+            if len(tokens) < maxLen:
+                for i in range(maxLen - len(tokens)):
+                    tokens.append(self.getTokenIdForWord(self.padToken))
 
         return tokens
     
-    def decodeTokenizedSentence(self, tokens):
+    def decode(self, tokens):
         words = []
         for token in tokens:
             words.append(self.getWordForTokenId(token))
@@ -133,7 +135,7 @@ class CCustomTokenizer:
             maxLen = self.getMaxLen()
         allRows = []
         for line in self.allLines:
-            tokens = self.encodeTokenizedSentence(line,maxLen)
+            tokens = self.encode(line,maxLen)
             allRows.append(tokens)
         return allRows
 
@@ -143,8 +145,8 @@ if __name__=="__main__":
     print("Total tokens: ", tokenizer.getVocabSize())
     print("MaxLen: ", tokenizer.getMaxLen())
     sentence = "the cat is good"
-    tokens = tokenizer.encodeTokenizedSentence(sentence)
+    tokens = tokenizer.encode(sentence)
     print("Tokens: ", tokens)
-    decodedSentence = tokenizer.decodeTokenizedSentence(tokens)
+    decodedSentence = tokenizer.decode(tokens)
     print("Decoded sentence: ", decodedSentence)
     print("All training data:\n ", tokenizer.getAllTrainingRows())

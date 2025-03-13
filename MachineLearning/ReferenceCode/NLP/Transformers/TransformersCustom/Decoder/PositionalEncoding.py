@@ -21,4 +21,4 @@ class PositionalEncoding(nn.Module):
   def forward(self, x):
     # x.shape: N x T x D
     x = x + self.pe[:, :x.size(1), :]
-    return self.dropout(x)
+    return self.dropout(x) # Randomly zeroes some of the elements

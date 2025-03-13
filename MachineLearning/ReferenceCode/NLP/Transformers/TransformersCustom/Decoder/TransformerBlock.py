@@ -27,5 +27,5 @@ class TransformerBlock(nn.Module):
   
   def getParamCount(self):
     count = sum(p.numel() for p in self.parameters() if p.requires_grad) 
-    count += self.mha.getParamCount()
+    count += self.mha.getParamCount() # Caussal self attention
     return count
