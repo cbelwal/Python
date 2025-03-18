@@ -111,7 +111,8 @@ class CCustomTokenizer:
         tokens = []
         tokens.append(self.getTokenIdForWord(self.startToken))
         for word in words:
-            tokens.append(self.getTokenIdForWord(word.lower()))
+            if word != '': # Ignore empty words
+                tokens.append(self.getTokenIdForWord(word.lower()))
         tokens.append(self.getTokenIdForWord(self.sepToken))
         
         # Pad the sentence
