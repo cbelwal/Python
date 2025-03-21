@@ -16,6 +16,7 @@ class CCustomInference:
         self.model = model
         self.tokenizer = tokenizer
         self.device = device
+        self.debug = debug
 
     def log(self, message):
         if self.debug: 
@@ -28,6 +29,8 @@ class CCustomInference:
         return predictionId
     
     # topP is a nucleus sampling technique, using cumulative probabilities
+    # list is first sorted with highest probability first
+    # lower topP and lower temperature will result in less randomness    
     def getTopPFilteredIndices(self, logits, topP=1.0):
         sortedLogits, sortedIndices = torch.sort(logits, descending=True)
         cumulativeProbs = torch.cumsum(torch.softmax(sortedLogits, dim=-1), dim=-1)
@@ -37,19 +40,20 @@ class CCustomInference:
     def getRandomSampling(self, logits, temperature=1.0, topP=1.0):
         # topK should be less than maxLen
         tensorTemperature = torch.tensor([temperature]).to(self.device)
-        tempModifiedLogits = logits/tensorTemperature
+        tempModifiedLogits = (logits/tensorTemperature).squeeze(0)
         topPFilteredLogitsIndices = self.getTopPFilteredIndices(tempModifiedLogits, topP)
-        topPFilteredLogitsValues = logits[topPFilteredLogitsIndices]
+        topPFilteredLogitsValues = tempModifiedLogits[topPFilteredLogitsIndices]
         # Get the probabilities for topPFilteredLogits
         topPProbabilities = torch.softmax(topPFilteredLogitsValues, dim=-1)
         # multinomial: Returns a tensor where each row contains num_samples indices 
         # sampled from the multinomial 
+        # This allows to arbitrarily take 1 sample from the topPFilteredLogits
+        # <TODO>: prediction is given the prob, value need to return index.
         predictionId = torch.multinomial(topPProbabilities, num_samples=1)
         return predictionId
     
     def fromBeamSearch(self, relevantOutputs, beamSize=3):
         pass
-
 
     def getInferedTokenIds(self, input, temperature=1.0, topP=1.0):
         self.model.eval()
@@ -64,13 +68,13 @@ class CCustomInference:
         # relevantOutputs Shape: N x V
         relevantLogits = logits[:, -1, :] # Get only the last token output
         # relevantLogits has the logits for the last token
-        self.log("Relevant outputs shape",relevantLogits.shape)
+        self.log(f"Relevant outputs shape: {relevantLogits.shape}")
         
         if(temperature == 0.0):
-            predictionId = self.fromGreedySampling(relevantLogits)  
+            predictionId = self.getGreedySampling(relevantLogits)  
         else:
-            predictionId = self.fromRandomSampling(relevantLogits, temperature=temperature, topP=topP)
-        self.log("Inputs Decoded",self.getDecodedSentence(input))
+            predictionId = self.getRandomSampling(relevantLogits, temperature=temperature, topP=topP)
+        self.log(f"Inputs Decoded: {self.getDecodedSentence(input)}")
         return predictionId # return as a tensor
         
     def getDecodedSentence(self,tensorInputTokens):
@@ -86,18 +90,20 @@ class CCustomInference:
         len = 2
         while(len < self.tokenizer.getMaxLen()):
             len += 1
-            predTokenId = self.getInferedTokenIds(self.model, tensorInputTokenIds, temperature=temperature)
+            predTokenId = self.getInferedTokenIds(tensorInputTokenIds, temperature=temperature, topP=topP)
             tensorInputTokenIds = torch.hstack((tensorInputTokenIds, predTokenId.view(1, 1)))
             if predTokenId == self.tokenizer.sepTokenId:
                 break
         return self.getDecodedSentence(tensorInputTokenIds)    
     
 if __name__ == "__main__":
-    sampleLogits = torch.tensor([0.15, 0.1, 0.3, 0.25]) # idx 2 (value .3) is the highest 
+    sampleLogits = torch.tensor([[0.15, 0.1, 0.3, 0.25]]) # idx 2 (value .3) is the highest 
     inferenceObj = CCustomInference(None, None,None, debug=True)
     print(f"Greedy Sampling: {inferenceObj.getGreedySampling(sampleLogits)}") # output 2
     # Will return sorted list of index till cumpub is reached
     # output 2,3,0 for values 0.3, 0.25, 0.15
-    #print(f"TopP Filtered Indices: {inferenceObj.getTopPFilteredIndices(sampleLogits, topP=.8)}") 
+    print(f"TopP Filtered Indices: {inferenceObj.getTopPFilteredIndices(sampleLogits, topP=.8)}") 
     print(f"Random Sampling with Temp = 1.0, topP = 1.0: {inferenceObj.getRandomSampling(sampleLogits, temperature=1.0, topP=1.0)}")
+    print(f"Random Sampling with Temp = 1.0, topP = 0.6: {inferenceObj.getRandomSampling(sampleLogits, temperature=1.0, topP=1.0)}")
+    print(f"Random Sampling with Temp = .5, topP = 1.0: {inferenceObj.getRandomSampling(sampleLogits, temperature=0.5, topP=1.0)}")
     pass
