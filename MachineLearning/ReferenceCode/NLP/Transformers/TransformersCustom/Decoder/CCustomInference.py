@@ -1,4 +1,5 @@
 import torch
+
 # ----------------- Inference -----------------
 # These are the main inference functions, as the model object does not have any
 #
@@ -17,9 +18,7 @@ class CCustomInference:
         self.tokenizer = tokenizer
         self.device = device
         self.debug = debug
-        self.randomGenerator = torch.Generator(device=device)
-        torch.seed() # Different random results
-        #self.randomGenerator.manual_seed(42)
+        
 
     def log(self, message):
         if self.debug: 
@@ -40,15 +39,18 @@ class CCustomInference:
         sortedIndicesToKeep = sortedIndices[cumulativeProbs <= topP]
         return sortedIndicesToKeep
 
+    # Use topP to filter the logits and then sample from the filtered logits
+    # Use softmax to get the probabilities with temperature
+    # Use multinomial to get the index of the random sampled token
     def getRandomSampling(self, logits, temperature=1.0, topP=1.0):
         # topK should be less than maxLen
         tensorTemperature = torch.tensor([temperature]).to(self.device)
         tempModifiedLogits = (logits/tensorTemperature).squeeze(0)
         topPFilteredLogitsIndices = self.getTopPFilteredIndices(tempModifiedLogits, topP)
         topPFilteredLogitsValues = tempModifiedLogits[topPFilteredLogitsIndices]
+        
         # Map indices in topPFilteredLogitsValues to topPFilteredLogitsIndices
         # create tensor map
-        
         mapIndices = {}
         for i in range(len(topPFilteredLogitsIndices)):
             mapIndices[i] = topPFilteredLogitsIndices[i]     
@@ -57,11 +59,21 @@ class CCustomInference:
         topPProbabilities = torch.softmax(topPFilteredLogitsValues, dim=-1)
         # multinomial: Returns a tensor where each row contains num_samples indices 
         # sampled from the multinomial 
-        # This allows to arbitrarily take 1 sample from the topPFilteredLogits
-        predictionId = torch.multinomial(topPProbabilities, num_samples=1,generator=self.randomGenerator)
+        # example: topPProbabilities = [0.3, 0.25, 0.15, 0.1]
+        # num_samples = 5, and value returned is: tensor([3, 2, 3, 1, 0])
+        # it means category 3 was sampled 2 times, category 2,1, and 0 were sampled 1 time    
+        # if replacement is True any number of samples can be taken
+        # A higher temperature will bring probabilities closer to each other, 
+        # increasing chances for multinomial to pick from any of those values
+        # A lower temperature will bring probabilities further apart,
+        # increasing chances for multinomial to pick the highest probability 
+        # Note: The further apart the probabilities are, the higher the temperature value should be
+        # to get a more uniform distribution of probabilities 
+        self.log(f"TopPProbabilities: {topPProbabilities}")
+        predictionId = torch.multinomial(topPProbabilities, num_samples=1, replacement = False)
         #TODO: verify tensor is working
         return mapIndices[predictionId.item()].clone().detach()
-    
+
     def fromBeamSearch(self, relevantOutputs, beamSize=3):
         pass
 
@@ -118,8 +130,8 @@ if __name__ == "__main__":
     print(f"Greedy Sampling: {inferenceObj.getGreedySampling(sampleLogits)}") # output 2
     # Will return sorted list of index till cumpub is reached
     # output 2,3,0 for values 0.3, 0.25, 0.15
-    #print(f"TopP Filtered Indices: {inferenceObj.getTopPFilteredIndices(sampleLogits, topP=.8)}") 
-    #print(f"Random Sampling with (Temp = 1.0, topP = 1.0): {inferenceObj.getRandomSampling(sampleLogits, temperature=1.0, topP=1.0)}")
-    #print(f"Random Sampling with (Temp = 1.0, topP = 0.6): {inferenceObj.getRandomSampling(sampleLogits, temperature=1.0, topP=1.0)}")
-    #print(f"Random Sampling with (Temp = .5, topP = 1.0): {inferenceObj.getRandomSampling(sampleLogits, temperature=0.5, topP=1.0)}")
+    print(f"TopP Filtered Indices: {inferenceObj.getTopPFilteredIndices(sampleLogits, topP=.8)}") 
+    print(f"Random Sampling with (Temp = 1.0, topP = 1.0): {inferenceObj.getRandomSampling(sampleLogits, temperature=1.0, topP=1.0)}")
+    print(f"Random Sampling with (Temp = 1.0, topP = 0.6): {inferenceObj.getRandomSampling(sampleLogits, temperature=1.0, topP=1.0)}")
+    print(f"Random Sampling with (Temp = .5, topP = 1.0): {inferenceObj.getRandomSampling(sampleLogits, temperature=0.5, topP=1.0)}")
     print(f"Random Sampling with (Temp = .5, topP = 0.6): {inferenceObj.getRandomSampling(sampleLogits, temperature=0.5, topP=0.6)}")
