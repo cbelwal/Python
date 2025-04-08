@@ -46,5 +46,6 @@ class Decoder(nn.Module):
   
   def getParamCount(self):
      count = sum(p.numel() for p in self.parameters() if p.requires_grad)
-     count += self.transformer_blocks[0].getParamCount() * len(self.transformer_blocks)
+     # The above param count includes all the child layers
+     #count += self.transformer_blocks[0].getParamCount() * len(self.transformer_blocks)
      return count
