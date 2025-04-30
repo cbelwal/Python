@@ -42,6 +42,7 @@ class CCustomInference:
     # Use topP to filter the logits and then sample from the filtered logits
     # Use softmax to get the probabilities with temperature
     # Use multinomial to get the index of the random sampled token
+    # logits shapte is: N x T x V
     def getRandomSampling(self, logits, temperature=1.0, topP=1.0):
         # topK should be less than maxLen
         tensorTemperature = torch.tensor([temperature]).to(self.device)
@@ -59,7 +60,7 @@ class CCustomInference:
         topPProbabilities = torch.softmax(topPFilteredLogitsValues, dim=-1)
         # multinomial: Returns a tensor where each row contains num_samples indices 
         # sampled from the multinomial 
-        # example: topPProbabilities = [0.3, 0.25, 0.15, 0.1]
+        # example: topPProbabilities = [0.3, 0.25, 0.15, 0.1], indexed by categories 0,1,2,3
         # num_samples = 5, and value returned is: tensor([3, 2, 3, 1, 0])
         # it means category 3 was sampled 2 times, category 2,1, and 0 were sampled 1 time    
         # if replacement is True any number of samples can be taken
@@ -87,7 +88,7 @@ class CCustomInference:
         # get the index for the highest logits for each token
         # input Shape: N x T x V
         # output Shape: N x T x V
-        # relevantOutputs Shape: N x V
+        # relevantLogits Shape: N x V
         relevantLogits = logits[:, -1, :] # Get only the last token output
         # relevantLogits has the logits for the last token
         self.log(f"Relevant outputs shape: {relevantLogits.shape}")
