@@ -1,7 +1,7 @@
 import torch
-import numpy as np
 from DifferentialPrivacy.CDP_PrivacyAccountant import CDP_PrivacyAccountant
 
+# Use torch tensors for all operations to prevent confusion between numpy and torch
 # Ref: https://medium.com/pytorch/differential-privacy-series-part-1-dp-sgd-algorithm-explained-12512c3959a3
 class CDP_SGD:
     def __init__(self, 
@@ -15,10 +15,10 @@ class CDP_SGD:
                  max_delta=1e-5,
                  C=1.0):
         self.model = model
-        self.ε = eps
-        self.δ = delta
+        self.ε = torch.tensor(eps)
+        self.δ = torch.tensor(delta)
         self.amortized_ratio = batch_size / totalSamples
-        self.σ = torch.tensor(self.getStandardDeviation())
+        self.σ = self.getStandardDeviation() # returns a tensor
         self.learning_rate = torch.tensor(learning_rate)
         self.max_eps = torch.tensor(max_eps)
         self.max_delta = torch.tensor(max_delta)
@@ -37,7 +37,7 @@ class CDP_SGD:
         #   Privacy, Appendix A.
         #   http://www.cis.upenn.edu/~aaroth/Papers/privacybook.pdf
         #amortized_δ = self.amortized_ratio * self.δ
-        σ = np.sqrt (2.0 * np.log(1.25/self.δ))
+        σ = torch.sqrt (2.0 * torch.log(1.25/self.δ))
         σ /= self.ε
         return σ
 
@@ -65,7 +65,7 @@ class CDP_SGD:
             sanitizedGrads = self.getSanitizedGradients(grads)
             # This is what optimizer.step() does
             param = param - self.learning_rate * sanitizedGrads
-            # Note: In the Medeium article, the noise is added after gradient is computed
+            # Note: In the Medium article, the noise is added after gradient is computed
             # which is at this point. But in Abadi et al. the noise is added before
             # This is equivalent to param.zero_grad() in Optimizer
             param.grad = tensorInit # Reset for next iteration
