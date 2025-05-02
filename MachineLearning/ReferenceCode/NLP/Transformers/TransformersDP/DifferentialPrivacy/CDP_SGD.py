@@ -6,9 +6,9 @@ from DifferentialPrivacy.CDP_PrivacyAccountant import CDP_PrivacyAccountant
 class CDP_SGD:
     def __init__(self, 
                  model,
-                 totalSamples,
+                 totalSamples=1,
                  batch_size=1,
-                 learning_rate=0.01, 
+                 learningRate=0.01, 
                  delta=1e-7, 
                  eps = 1.0,
                  max_eps=64.0,
@@ -19,7 +19,7 @@ class CDP_SGD:
         self.δ = torch.tensor(delta)
         self.amortized_ratio = batch_size / totalSamples
         self.σ = self.getStandardDeviation() # returns a tensor
-        self.learning_rate = torch.tensor(learning_rate)
+        self.learning_rate = torch.tensor(learningRate)
         self.max_eps = torch.tensor(max_eps)
         self.max_delta = torch.tensor(max_delta)
         self.C = torch.tensor(C) # Clipping Threshold
@@ -44,7 +44,7 @@ class CDP_SGD:
 
     def getSanitizedGradients(self, grads):
         # Clip the gradients
-        torch.nn.utils.clip_grad_norm_(grads, max_norm=self.C)
+        #torch.nn.utils.clip_grad_norm_(grads, max_norm=self.C)
         # Add noise to the gradients
         # in paper N(mean, variance) represenatation is used.
         # via Strong Composition Theorem
@@ -52,23 +52,24 @@ class CDP_SGD:
         # q = L/N, which is sampling ratio. L = 1 in our case
         # Each step is (O(q.ε),q.δ)-differentially private with respect to the whole database
         normalDist = torch.normal(mean=torch.tensor(0.0), std=self.σ * self.C) 
-        grads += normalDist
+        #grads += normalDist
         self.privacyAccountant.computePrivacySpending(self.ε, self.δ)
         return grads
 
+    # Call this only after loss.backward() to apply dy/dx to the model parameters
     def singleStep(self):
         count = 0        
         for param in self.model.parameters(): # Loop executed ~37 times
             # these gradients are already computed
-            grads = param.grad.detach().clone()
-            tensorInit = torch.zeros(grads.shape)
-            sanitizedGrads = self.getSanitizedGradients(grads)
-            # This is what optimizer.step() does
-            param = param - self.learning_rate * sanitizedGrads
+            #grads = param.grad.detach().clone()
+            #tensorInit = torch.zeros(param.grad.shape) # Need it here since shapre can be different
+            sanitizedGrads = self.getSanitizedGradients(param.grad)
+            # Update the params, This is what optimizer.step() does
+            param.data =- self.learning_rate * sanitizedGrads
             # Note: In the Medium article, the noise is added after gradient is computed
             # which is at this point. But in Abadi et al. the noise is added before
             # This is equivalent to param.zero_grad() in Optimizer
-            param.grad = tensorInit # Reset for next iteration
+            param.grad.zero_() #= tensorInit # Reset for next iteration
             count += 1
         self.privacyAccountant.computePrivacySpending(self.ε, self.δ)
         #print(count)
