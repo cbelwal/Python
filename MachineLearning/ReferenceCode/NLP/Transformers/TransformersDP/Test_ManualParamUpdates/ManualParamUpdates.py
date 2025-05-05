@@ -28,11 +28,10 @@ class LinearTest(nn.Module):
         # Loop through all parameters in the model
         for param in self.parameters():
             # Update the parameter using the learning rate and gradient
-            param.data -= learning_rate * param.grad.data
+            param.data = param.data - learning_rate * param.grad.data
             # Zero out the gradient after updating
             param.grad.data.zero_()
             #t = torch.zeros(param.grad.shape) # Need it here since shapre can be different
-
 
 '''
     def update_params(self, learning_rate):

@@ -56,21 +56,33 @@ class CDP_SGD:
         self.privacyAccountant.computePrivacySpending(self.ε, self.δ)
         return grads
 
+
+    # For purpose of clarity, we are using a separate function for zero grad
+    # and not setting grad = 0 in singleStep()
+    def setZeroGrads(self):
+        # Set the gradients to zero
+        for param in self.model.parameters():
+            if param.grad is not None:
+                param.grad.data.zero_()
+             
     # Call this only after loss.backward() to apply dy/dx to the model parameters
     def singleStep(self):
-        count = 0        
+        count = 0  
+
         for param in self.model.parameters(): # Loop executed ~37 times
             # these gradients are already computed
             #grads = param.grad.detach().clone()
             #tensorInit = torch.zeros(param.grad.shape) # Need it here since shapre can be different
-            sanitizedGrads = self.getSanitizedGradients(param.grad)
+            #sanitizedGrads = self.getSanitizedGradients(param.grad)
             # Update the params, This is what optimizer.step() does
-            param.data =- self.learning_rate * sanitizedGrads
+            param.data = param.data - (self.learning_rate * param.grad.data) # sanitizedGrads
+            #param.data = param.data - .1
             # Note: In the Medium article, the noise is added after gradient is computed
             # which is at this point. But in Abadi et al. the noise is added before
             # This is equivalent to param.zero_grad() in Optimizer
-            param.grad.zero_() #= tensorInit # Reset for next iteration
+            #= tensorInit # Reset for next iteration
             count += 1
+        
         self.privacyAccountant.computePrivacySpending(self.ε, self.δ)
         #print(count)
     
