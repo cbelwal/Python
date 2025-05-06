@@ -52,7 +52,7 @@ class CDP_SGD:
         # q = L/N, which is sampling ratio. L = 1 in our case
         # Each step is (O(q.ε),q.δ)-differentially private with respect to the whole database
         normalDist = torch.normal(mean=torch.tensor(0.0), std=self.σ * self.C) 
-        #grads += normalDist
+        grads += normalDist
         self.privacyAccountant.computePrivacySpending(self.ε, self.δ)
         return grads
 
@@ -70,13 +70,12 @@ class CDP_SGD:
         count = 0  
 
         for param in self.model.parameters(): # Loop executed ~37 times
-            # these gradients are already computed
-            #grads = param.grad.detach().clone()
-            #tensorInit = torch.zeros(param.grad.shape) # Need it here since shapre can be different
-            #sanitizedGrads = self.getSanitizedGradients(param.grad)
+            # these gradients are already computed            
+            
+            sanitizedGrads = self.getSanitizedGradients(param.grad.data) # Can also use param.grad
             # Update the params, This is what optimizer.step() does
-            param.data = param.data - (self.learning_rate * param.grad.data) # sanitizedGrads
-            #param.data = param.data - .1
+            param.data = param.data - (self.learning_rate * sanitizedGrads)
+            
             # Note: In the Medium article, the noise is added after gradient is computed
             # which is at this point. But in Abadi et al. the noise is added before
             # This is equivalent to param.zero_grad() in Optimizer
