@@ -110,9 +110,9 @@ class CCustomInference:
         # Remove the SEP Token at the end
         inputTokenIds = tokenizedPrompt[:-1] # Mask is not being considered at this time
         tensorInputTokenIds = torch.tensor(inputTokenIds).unsqueeze(0).to(self.device)
-        len = 2
-        while(len < self.tokenizer.getMaxLen()):
-            len += 1
+        currentLen = len(inputTokenIds)
+        while(currentLen < self.tokenizer.getMaxLen()):
+            currentLen += 1
             predTokenId = self.getInferedTokenIds(tensorInputTokenIds, temperature=temperature, topP=topP)
             tensorInputTokenIds = torch.hstack((tensorInputTokenIds, predTokenId.view(1, 1)))
             if predTokenId == self.tokenizer.sepTokenId:

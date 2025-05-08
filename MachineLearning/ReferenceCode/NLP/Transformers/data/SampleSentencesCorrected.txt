@@ -147,6 +147,8 @@ The cat is jumping over the house.
 Romi is a cat.
 Romi is a good cat.
 Romi is a black cat.
+Romi is a female cat.
+Gopu is a male cat.
 Romi jumps over the cat.
 Romi is over the house.
 The cat is Romi.

@@ -38,7 +38,7 @@ class CDP_SGD:
         #   http://www.cis.upenn.edu/~aaroth/Papers/privacybook.pdf
         #amortized_δ = self.amortized_ratio * self.δ
         σ = torch.sqrt (2.0 * torch.log(1.25/self.δ))
-        σ /= self.ε
+        σ /= self.ε # Inverse relation to ε
         return σ
 
 
@@ -56,7 +56,6 @@ class CDP_SGD:
         self.privacyAccountant.computePrivacySpending(self.ε, self.δ)
         return grads
 
-
     # For purpose of clarity, we are using a separate function for zero grad
     # and not setting grad = 0 in singleStep()
     def setZeroGrads(self):
@@ -68,7 +67,6 @@ class CDP_SGD:
     # Call this only after loss.backward() to apply dy/dx to the model parameters
     def singleStep(self):
         count = 0  
-
         for param in self.model.parameters(): # Loop executed ~37 times
             # these gradients are already computed            
             
