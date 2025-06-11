@@ -88,8 +88,8 @@ class CCustomInference:
         # output contains the logits
         # get the index for the highest logits for each token
         # input Shape: N x T x V
-        # output Shape: N x T x V
-        # relevantLogits Shape: N x V
+        # output logits Shape: N x T x V
+        # relevantLogits Shape: N x V (Since we take last T, T dimension is removed)
         relevantLogits = logits[:, -1, :] # Get only the last token output
         # relevantLogits has the logits for the last token
         self.log(f"Relevant outputs shape: {relevantLogits.shape}")
