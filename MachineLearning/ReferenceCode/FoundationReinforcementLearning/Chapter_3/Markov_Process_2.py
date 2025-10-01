@@ -1,8 +1,9 @@
 import numpy as np
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Mapping
 import itertools
 
+handy_map: Mapping[Optional[bool], int] = {True: -1, False: 1, None: 0}
 @dataclass
 class Process2:
     @dataclass
@@ -10,11 +11,10 @@ class Process2:
         price: int
         is_prev_move_up: Optional[bool]
         
-    level_param: int # level to which price mean-reverts
     alpha2: float = 0.75 # strength of reverse-pull (value in [0,1])
         
     def up_prob(self, state: State) -> float:
-        return 1. / (1 + np.exp(-self.alpha1 * (self.level_param - state.price)))
+        return 0.5 * (1 + self.alpha2 * handy_map[state.is_prev_move_up])
     
     # random.binomial(n, p, size=None)    
     # n: number of trials, >= 0
@@ -25,7 +25,9 @@ class Process2:
         # up_move will be 0 or 1
         # if 0, price = state.price + 0 * 2 - 1 = state.price - 1 (will go down)
         # if 1, price = state.price + 1 * 2 - 1 = state.price + 1 (will go up)
-        return Process1.State(price=state.price + up_move * 2 - 1)
+        return Process2.State(
+                price=state.price + up_move * 2 - 1,
+                is_prev_move_up=bool(up_move))
         
 def simulation(process, start_state):
     state = start_state
@@ -33,14 +35,13 @@ def simulation(process, start_state):
         yield state
         state = process.next_state(state)
 
-def process1_price_traces(
-            start_price: int,
-            level_param: int,
-            alpha1: float,
+def process2_price_traces(
+            start_price: int,           
+            alpha2: float,
             time_steps: int,
             num_traces: int) -> np.ndarray:
-        process = Process1(level_param=level_param, alpha1=alpha1)
-        start_state = Process1.State(price=start_price)
+        process = Process2(alpha2=alpha2)
+        start_state = Process2.State(price=start_price, is_prev_move_up=None)
         return np.vstack([
         np.fromiter((s.price for s in itertools.islice(
         simulation(process, start_state),
@@ -50,10 +51,9 @@ def process1_price_traces(
 if __name__ == "__main__":
     # Example usage
     start_price = 100
-    level_param = 100
-    alpha1 = 0.25
+    alpha2 = 0.25
     time_steps = 10
     num_traces = 5
     
-    traces = process1_price_traces(start_price, level_param, alpha1, time_steps, num_traces)
+    traces = process2_price_traces(start_price, alpha2, time_steps, num_traces)
     print(traces)
