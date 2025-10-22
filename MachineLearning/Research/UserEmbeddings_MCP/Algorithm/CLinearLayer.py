@@ -1,3 +1,6 @@
+import torch
+import torch.nn as nn
+
 class CLinearLayer(nn.Module):
     def __init__(self, embeddingDimensions=4, totalNumberOfTools=2):
         super().__init__()
