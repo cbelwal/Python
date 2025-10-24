@@ -8,6 +8,7 @@ class CSQLLite:
     def __init__(self, db_file):
         self.db_file = db_file
         self.conn = self.create_connection()
+        
 
     # This was also create file if it doesnt exist
     def create_connection(self):
@@ -34,11 +35,12 @@ class CSQLLite:
         try:
             c = self.conn.cursor()
             c.execute(query, params)
+            result = c.lastrowid
             self.conn.commit()
-            return True
+            return result
         except Error as e:
             print(f"Error executing query: {e}")
-            return False
+            return -1
         
     def execute_read_query(self, query, params=()):
         """ Execute a read query and return the results
