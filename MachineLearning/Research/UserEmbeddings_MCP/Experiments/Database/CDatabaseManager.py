@@ -92,7 +92,8 @@ class CDatabaseManager:
         self.sqlLite.execute_query(create_session_interactions_table)
 
     def last_insert_rowid(self):
-        return self.sqlLite.last_insert_rowid()
+        (id,) = self.dbManager.execute_read_query("SELECT last_insert_rowid();")[0]
+        return id
 
     def execute_query(self, query, params=()):
         return self.sqlLite.execute_query(query, params)

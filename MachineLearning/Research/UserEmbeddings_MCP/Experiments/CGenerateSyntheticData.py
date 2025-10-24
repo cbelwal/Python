@@ -49,7 +49,7 @@ class CGenerateSyntheticData:
             insert_session_query = "INSERT INTO sessions (user_id, session_depth) VALUES (?, ?);"
             session_id = self.dbManager.execute_query(insert_session_query, (user_id, session_length))
             #(session_id,) = self.dbManager.execute_read_query("SELECT last_insert_rowid();")[0] #.fetchone()[0]
-            #session_id = self.dbManager.last_insert_rowid()
+        
 
             # Now insert into session_details
             mcp_server_id = random.randint(1, CConfig.MAX_MCP_SERVERS)
