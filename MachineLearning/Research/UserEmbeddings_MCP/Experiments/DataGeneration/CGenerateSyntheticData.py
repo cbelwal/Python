@@ -8,14 +8,15 @@ import random
 import numpy as np
 from tqdm import tqdm
 
-# Ensure the root folder path is in sys.path ---
+# ----------------------------------------------
+# Ensure the root folder path is in sys.path 
 topRootPath = os.path.dirname(
               os.path.dirname(
               os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(topRootPath)
 #----------------------------------------------
-from UserEmbeddings_MCP.Experiments.CConfig import CConfig
-from UserEmbeddings_MCP.Experiments.Database.CDatabaseManager import CDatabaseManager
+from Experiments.CConfig import CConfig
+from Experiments.Database.CDatabaseManager import CDatabaseManager
 
 class CGenerateSyntheticData:
     def __init__(self):

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class CConfig:
-    MAX_USERS = 1000 #100000
+    MAX_USERS = 1#000 #100000
     MAX_MCP_SERVERS = 100
     MAX_TOOLS_PER_MCP = 50
     MIN_TOOLS_PER_MCP = 1
