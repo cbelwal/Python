@@ -9,8 +9,7 @@ import os,sys
 # Explicit declaration to ensure the root folder path is in sys.path 
 topRootPath = os.path.dirname(
               os.path.dirname(
-              os.path.dirname(
-              os.path.dirname(os.path.abspath(__file__)))))
+              os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(topRootPath)
 #----------------------------------------------
 from Algorithms.Alg_1_DataPreparation import Algorithm_1_DataPreparation
