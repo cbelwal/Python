@@ -66,7 +66,7 @@ if __name__== "__main__":
     CDistanceFunctions.print_distance_measures_tensors("Raw Data 0 and 1",MAT_tau_u[0],MAT_tau_u[1])
     
     
-    CDistanceFunctions.print_distance_measures_tensors("UserIds: 1 and 2",MAT_E[0],MAT_E[1])
-    CDistanceFunctions.print_distance_measures_tensors("UserIds: 1 and 3",MAT_E[0],MAT_E[2]) 
-    CDistanceFunctions.print_distance_measures_tensors("UserIds: 1 and 3",MAT_E[0],MAT_E[3]) 
+    CDistanceFunctions.print_distance_measures_tensors(MAT_E[0],MAT_E[1],"UserIds: 1 and 2")
+    CDistanceFunctions.print_distance_measures_tensors(MAT_E[0],MAT_E[2],"UserIds: 1 and 3") 
+    CDistanceFunctions.print_distance_measures_tensors(MAT_E[0],MAT_E[3],"UserIds: 1 and 3") 
     

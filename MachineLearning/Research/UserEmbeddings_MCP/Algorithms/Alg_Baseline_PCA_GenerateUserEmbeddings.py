@@ -43,23 +43,23 @@ def Alg_Baseline_PCA_GenerateUserEmbeddings(embeddingDimensions:int=8,
     MAT_E = torch.zeros(testData.NumberOfUsers, embeddingDimensions)
     loss_for_each_user = torch.zeros(testData.NumberOfUsers)
     # Train the model for each user
-    # For PCA we need to validate all samples together
+    # For PCA we need to validate all samples together so we 
+    # cannot use per sample
     #for i in tqdm(range(0,testData.NumberOfUsers)):          
         
-        # Get the ith row of MAT_tau_u
-        # .view: reshape the tensor to be of shape (1, totalNumberOfTools)
-        # the elements will be the same, just the shape will be different
-    tmpMAT_u_tau = MAT_u_tau[i].view(1, testData.NumberOfTools)
+    # the elements will be the same, just the shape will be different
+    tmpMAT_u_tau = MAT_u_tau #.view(1, testData.NumberOfTools)
         
-        # Convert tmpMAT_u_tau to numpy for processing in CPolynomialFitReduction
+    # Convert tmpMAT_u_tau to numpy 
     num_py_array = tmpMAT_u_tau.numpy()
         
     np_array = __generate_pca_for_given_values__(num_py_array,
                                                     reduce_to_dim=embeddingDimensions)
                                                       
         # Convert back to tensor
-    MAT_E[i] = torch.tensor(np_array, dtype=torch.float32)
-    loss_for_each_user[i] = torch.tensor(0., dtype=torch.float32)
+    MAT_E = torch.tensor(np_array, dtype=torch.float32)
+    # loss_for_each_user will be 0
+    #loss_for_each_user = torch.tensor(0., dtype=torch.float32)
 
                     
     return (MAT_E,loss_for_each_user)

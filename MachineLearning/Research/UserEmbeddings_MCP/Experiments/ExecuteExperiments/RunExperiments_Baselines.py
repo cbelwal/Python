@@ -1,3 +1,5 @@
+# These compute the baselines (PCA, Raw distances etc.) on synthetic data
+
 import os,sys
 import datetime
 # ----------------------------------------------
@@ -8,33 +10,29 @@ topRootPath = os.path.dirname(
 sys.path.append(topRootPath)
 #----------------------------------------------
 
-from Algorithms.Alg_1_DataPreparation import Algorithm_1_DataPreparation
-from Algorithms.Alg_2_GenerateUserEmbeddings import  Algorithm_2_GenerateUserEmbeddings
-from Algorithms.Alg_3_GenerateUserEmbeddings import Algorithm_3_GenerateUserEmbeddings
+from Algorithms.Alg_Data_Raw import Algorithm_Data_Raw
+from Algorithms.Alg_Baseline_PCA_GenerateUserEmbeddings import  Alg_Baseline_PCA_GenerateUserEmbeddings
+
 from Algorithms.Helpers.CDataMain import CDataMain
 from Experiments.CConfig import CConfig
 from Experiments.ExecuteExperiments.Helpers.CResultsStore import CResultsStore
 from Experiments.ExecuteExperiments.Helpers.CDistanceAnalysis import CDistanceAnalysis
 
+PCA_ALG_ID = 11
 
-def run_experiments_on_synthetic_data(All_C_hat_u:dict,algID:int):     
-    # Step 2: Create Test Data Main Instance
+def run_pca_on_synthetic_data(All_C_hat_u:dict):     
     testData = CDataMain(All_C_hat_u)
     embeddingDimensions = CConfig.EMBEDDING_DIMENSIONS
-    if(algID == 2):
-        (MAT_E, loss_for_each_user) = Algorithm_2_GenerateUserEmbeddings(
+   
+    (MAT_E, loss_for_each_user) = Alg_Baseline_PCA_GenerateUserEmbeddings(
                 embeddingDimensions=embeddingDimensions,
                 testData=testData)
-    elif(algID == 3):
-        (MAT_E, loss_for_each_user) = Algorithm_3_GenerateUserEmbeddings(
-                embeddingDimensions=embeddingDimensions,
-                testData=testData)
-    print(f"Generated Embeddings with Algorithm {algID}") 
+    print(f"Generated Embeddings with PCA") 
     return (MAT_E, loss_for_each_user)
 
 
 def store_results_in_file(MAT_E, loss_for_each_user, algID:int):
-    store = CResultsStore(algID=algID)
+    store = CResultsStore(algID)  
     # Store embeddings in file
     store.store_embeddings(MAT_E)
     print(f"User embeddings stored in file")
@@ -45,19 +43,17 @@ def store_results_in_file(MAT_E, loss_for_each_user, algID:int):
 
 # Run the experiments and store embeddings and losses in file
 if __name__== "__main__":
-    print(f"Starting experiments on synthetic data at time {datetime.datetime.now()}...")
-    print("Running A/g #1 on synthetic data...")
+    print(f"Starting baseline experiments on synthetic data at time {datetime.datetime.now()}...")
+    print("Preparing raw data...")
     # Step 1: Data Preparation
-    All_C_hat_u = Algorithm_1_DataPreparation()
+    All_C_hat_u = Algorithm_Data_Raw()
 
-    # Run algorithm 2
-    algorithmsIds = [2,3]
-    for algID in algorithmsIds:
-        print(f"Computing embeddings for Algorithm {algID}...")
-        (MAT_E, loss_for_each_user) = \
-            run_experiments_on_synthetic_data(All_C_hat_u,algID)
-        print(f"Storing embeddings for Algorithm {algID}...")
-        store_results_in_file(MAT_E, loss_for_each_user, algID=algID)
+    # Compute PCA embeddings
+    print(f"Computing embeddings for PCA...")
+    (MAT_E, loss_for_each_user) = \
+        run_pca_on_synthetic_data(All_C_hat_u)
+    print(f"Storing embeddings for PCA...")
+    store_results_in_file(MAT_E, loss_for_each_user,PCA_ALG_ID)
     print(f"Experiments completed at time {datetime.datetime.now()}.")
 
        

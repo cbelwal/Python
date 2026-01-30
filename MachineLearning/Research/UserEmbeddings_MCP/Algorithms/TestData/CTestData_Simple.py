@@ -78,7 +78,7 @@ if __name__== "__main__":
     '''
     print("Best losses for each user:", loss_for_user.tolist())
     
-    CDistanceFunctions.print_distance_measures_tensors("0 and 2",MAT_E[0],MAT_E[2])
-    CDistanceFunctions.print_distance_measures_tensors("1 and 3",MAT_E[0],MAT_E[3])
-    CDistanceFunctions.print_distance_measures_tensors("0 and 1",MAT_E[0],MAT_E[1])
+    CDistanceFunctions.print_distance_measures_tensors(MAT_E[0],MAT_E[2],"Canary 1 - 0 and 2")
+    CDistanceFunctions.print_distance_measures_tensors(MAT_E[0],MAT_E[3],"Canary 2 - 1 and 3")
+    CDistanceFunctions.print_distance_measures_tensors(MAT_E[0],MAT_E[1],"0 and 1")
  
