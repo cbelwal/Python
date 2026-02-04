@@ -1,6 +1,5 @@
 import os,sys
 import math
-import pickle
 # ----------------------------------------------
 # Explicit declaration to ensure the root folder path is in sys.path
 topRootPath = os.path.dirname(
@@ -11,7 +10,8 @@ sys.path.append(topRootPath)
 #----------------------------------------------
 from Experiments.Database.CDatabaseManager import CDatabaseManager
 from Algorithms.Alg_Data_Raw import Algorithm_Data_Raw
-from Experiments.CConfig import CConfig
+from Algorithms.Helpers.CDataMain import CDataMain
+from Experiments.ExecuteExperiments.Helpers.CResultsStore import CResultsStore
 
 class CDistanceAnalysis_Baseline_Raw:
     RAW_ALG_ID = 21  # Algorithm ID for raw tool counts
@@ -25,53 +25,39 @@ class CDistanceAnalysis_Baseline_Raw:
 
     # ==================== FILE STORAGE FUNCTIONS ====================
     @staticmethod
-    def get_raw_tool_counts_file_path() -> str:
-        """Get the file path for storing raw tool counts."""
-        folderPath = os.path.dirname(
-                     os.path.dirname(
-                     os.path.dirname(
-                     os.path.abspath(__file__))))
-        resultsFolder = os.path.join(folderPath, "Data", "ExperimentResults")
-        # Use the training loss file name pattern with alg_21
-        baseFileName = CConfig.BASE_EMBEDDINGS_FILE_NAME
-        fileNameComponents = baseFileName.split(".")
-        fileName = f"{fileNameComponents[0]}_alg_{CDistanceAnalysis_Baseline_Raw.RAW_ALG_ID}.{fileNameComponents[1]}"
-        filePath = os.path.join(resultsFolder, fileName)
-        return filePath
-
-    @staticmethod
     def store_raw_tool_counts():
         """
-        Read raw tool counts from DB and store to file.
+        Read raw tool counts from DB, convert to full matrix using CDataMain,
+        and store to file using CResultsStore.
         This should be run manually once to create the file.
         """
         print("Reading raw tool counts from database...")
-        raw_tool_counts = Algorithm_Data_Raw()
+        All_C_hat_u = Algorithm_Data_Raw()
 
-        filePath = CDistanceAnalysis_Baseline_Raw.get_raw_tool_counts_file_path()
-        print(f"Storing raw tool counts to file: {filePath}")
+        print("Converting to full matrix using CDataMain...")
+        dataMain = CDataMain(All_C_hat_u)
+        MAT_raw = dataMain.get_MAT_u_tau()
 
-        with open(filePath, 'wb') as f:
-            pickle.dump(raw_tool_counts, f)
+        print(f"Storing raw tool counts matrix to file...")
+        store = CResultsStore(CDistanceAnalysis_Baseline_Raw.RAW_ALG_ID)
+        store.store_embeddings(MAT_raw)
 
-        print(f"Raw tool counts stored successfully. Total users: {len(raw_tool_counts)}")
+        print(f"Raw tool counts matrix stored successfully. Shape: {MAT_raw.shape}")
 
     @staticmethod
     def load_raw_tool_counts_from_file():
-        """Load raw tool counts from the stored file."""
-        filePath = CDistanceAnalysis_Baseline_Raw.get_raw_tool_counts_file_path()
-        print(f"Loading raw tool counts from file: {filePath}")
-
-        with open(filePath, 'rb') as f:
-            raw_tool_counts = pickle.load(f)
-
-        print (f"Raw tool counts loaded successfully. Total users: {len(raw_tool_counts)}")
-        return raw_tool_counts
+        """Load raw tool counts matrix from the stored file using CResultsStore."""
+        print("Loading raw tool counts matrix from file...")
+        store = CResultsStore(CDistanceAnalysis_Baseline_Raw.RAW_ALG_ID)
+        MAT_raw = store.load_embeddings()
+        print(f"Raw tool counts matrix loaded successfully. Shape: {MAT_raw.shape}")
+        return MAT_raw
 
     def get_raw_tool_counts(self):
-        """Lazy load raw tool counts from stored file."""
+        """Lazy load raw tool counts as sparse dictionary from database.
+        Used by distance analysis functions that require sparse format."""
         if self._raw_tool_counts is None:
-            self._raw_tool_counts = self.load_raw_tool_counts_from_file()
+            self._raw_tool_counts = Algorithm_Data_Raw()
         return self._raw_tool_counts
 
     def get_canary_user_ids(self, canary_id):

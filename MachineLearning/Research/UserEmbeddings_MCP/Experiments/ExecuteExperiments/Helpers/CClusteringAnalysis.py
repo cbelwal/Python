@@ -10,8 +10,9 @@ topRootPath = os.path.dirname(
               os.path.dirname(os.path.abspath(__file__)))))
 sys.path.append(topRootPath)
 #----------------------------------------------
-from Experiments.Database.CDatabaseManager import CDatabaseManager 
+from Experiments.Database.CDatabaseManager import CDatabaseManager
 from sklearn.cluster import KMeans
+from kneed import KneeLocator
 import torch
 import numpy as np
 
@@ -38,7 +39,26 @@ class CClusteringAnalysis:
             kmeans.fit(self.MAT_E.numpy())
             wcss.append(kmeans.inertia_)
         
+        optimal_clusters = self._find_elbow_point(wcss, max_clusters)
+        print(f"Optimal number of clusters (elbow method): {optimal_clusters}")
+
         return wcss
+
+    def _find_elbow_point(self, wcss: list, max_clusters: int) -> int:
+        """
+        Determine the optimal number of clusters by finding the elbow point in WCSS.
+        Uses the kneed library's KneeLocator to detect the elbow.
+        """
+        k_range = range(1, len(wcss) + 1)
+        kneedle = KneeLocator(
+            x=list(k_range),
+            y=wcss,
+            curve='convex',
+            direction='decreasing'
+        )
+
+        # Return the elbow point, default to 2 if no elbow is found
+        return kneedle.elbow if kneedle.elbow is not None else 2
 
     # Default distance metric is Euclidean
     def generate_kmeans_clustering(self,num_clusters:int=GIVEN_NUMBER_OF_CLUSTERS):

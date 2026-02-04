@@ -1,3 +1,5 @@
+# Computes Cosine and Euclidean distances for embeddings from: 
+# Algorithms 2, 3, and PCA Baseline (11)
 import os,sys
 # ----------------------------------------------
 # Explicit declaration to ensure the root folder path is in sys.path

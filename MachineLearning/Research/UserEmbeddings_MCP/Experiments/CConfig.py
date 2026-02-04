@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+# For changes in embedding dimension, make sure to update the file names 
+# and size accordingly
 @dataclass(frozen=True)
 class CConfig:
     MAX_USERS = 10000 # Change the file names accordingly

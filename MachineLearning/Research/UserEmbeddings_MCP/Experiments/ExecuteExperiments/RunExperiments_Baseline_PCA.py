@@ -1,4 +1,4 @@
-# These compute the baselines (PCA, Raw distances etc.) on synthetic data
+# These compute the baselines for PCA on synthetic data
 
 import os,sys
 import datetime

@@ -13,67 +13,30 @@ sys.path.append(topRootPath)
 #----------------------------------------------
 from Experiments.Database.CDatabaseManager import CDatabaseManager
 from Experiments.ExecuteExperiments.Helpers.CResultsStore import CResultsStore
-from Experiments.ExecuteExperiments.Helpers.CDistanceAnalysis_Baseline_Raw import CDistanceAnalysis_Baseline_Raw
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
+from kneed import KneeLocator
 import torch
 import numpy as np
 
 MAX_NUMBER_OF_CLUSTERS = 10
 DEFAULT_NUMBER_OF_CLUSTERS = 3
 
-class CClusteringAnalysis_Baseline:
+class CClusteringAnalysis_Baselines_All:
     # Algorithm IDs: 2, 3 are main algorithms; 11 is PCA baseline; 21 is raw tool counts
-    ALGORITHM_IDS = [2, 3, 11]
-    RAW_ALG_ID = 21
+    ALGORITHM_IDS = [2, 3, 11, 21]
 
     def __init__(self):
         self.dbManager = CDatabaseManager()
         self.all_user_ids = self.dbManager.get_all_user_ids()
 
-        # Load embeddings for algorithms 2, 3, 11
+        # Load embeddings for all algorithms (including raw tool counts)
         print("Loading embeddings for algorithms...")
         self.embeddings_by_alg = {}
         for alg_id in self.ALGORITHM_IDS:
             store = CResultsStore(algID=alg_id)
             self.embeddings_by_alg[alg_id] = store.load_embeddings()
             print(f"  Algorithm {alg_id}: {self.embeddings_by_alg[alg_id].shape}")
-
-        # Load raw tool counts and convert to dense matrix
-        print("Loading raw tool counts...")
-        self._load_raw_tool_counts_as_matrix()
-
-    def _load_raw_tool_counts_as_matrix(self):
-        """
-        Load raw tool counts and convert sparse dictionary to dense numpy matrix.
-        """
-        raw_counts = CDistanceAnalysis_Baseline_Raw.load_raw_tool_counts_from_file()
-
-        # Find all unique tool IDs across all users
-        all_tool_ids = set()
-        for user_id in self.all_user_ids:
-            user_counts = raw_counts.get(user_id, {})
-            all_tool_ids.update(user_counts.keys())
-
-        # Create a sorted list of tool IDs for consistent ordering
-        tool_id_list = sorted(list(all_tool_ids))
-        tool_id_to_index = {tool_id: idx for idx, tool_id in enumerate(tool_id_list)}
-
-        num_users = len(self.all_user_ids)
-        num_tools = len(tool_id_list)
-
-        print(f"  Raw tool counts: {num_users} users x {num_tools} tools")
-
-        # Create dense matrix
-        raw_matrix = np.zeros((num_users, num_tools), dtype=np.float32)
-
-        for user_idx, user_id in enumerate(self.all_user_ids):
-            user_counts = raw_counts.get(user_id, {})
-            for tool_id, count in user_counts.items():
-                tool_idx = tool_id_to_index[tool_id]
-                raw_matrix[user_idx, tool_idx] = count
-
-        self.embeddings_by_alg[self.RAW_ALG_ID] = raw_matrix
 
     def get_embedding_matrix(self, alg_id):
         """Get embedding matrix as numpy array for a given algorithm."""
@@ -99,7 +62,23 @@ class CClusteringAnalysis_Baseline:
             kmeans.fit(mat)
             wcss.append(kmeans.inertia_)
 
-        return list(cluster_range), wcss
+        optimal_clusters = self._find_elbow_point(list(cluster_range), wcss)
+        return list(cluster_range), wcss, optimal_clusters
+
+    def _find_elbow_point(self, cluster_range: list, wcss: list) -> int:
+        """
+        Determine the optimal number of clusters by finding the elbow point in WCSS.
+        Uses the kneed library's KneeLocator to detect the elbow.
+        """
+        kneedle = KneeLocator(
+            x=cluster_range,
+            y=wcss,
+            curve='convex',
+            direction='decreasing'
+        )
+
+        # Return the elbow point, default to 2 if no elbow is found
+        return kneedle.elbow if kneedle.elbow is not None else 2
 
     def print_wcss_for_all_algorithms(self, max_clusters=MAX_NUMBER_OF_CLUSTERS):
         """Print WCSS values for all algorithms and baselines."""
@@ -107,16 +86,12 @@ class CClusteringAnalysis_Baseline:
         print("WCSS (Within-Cluster Sum of Squares) FOR OPTIMAL CLUSTER SELECTION")
         print("=" * 70)
 
-        all_alg_ids = self.ALGORITHM_IDS + [self.RAW_ALG_ID]
         alg_names = {2: "Algorithm 2", 3: "Algorithm 3", 11: "PCA Baseline", 21: "Raw Tool Counts"}
 
-        for alg_id in all_alg_ids:
-            cluster_range, wcss = self.compute_wcss(alg_id, max_clusters)
+        for alg_id in self.ALGORITHM_IDS:
+            cluster_range, wcss, optimal_clusters = self.compute_wcss(alg_id, max_clusters)
             print(f"\n*** {alg_names[alg_id]} (ID: {alg_id}) ***")
-            print(f"{'Clusters':<10} {'WCSS':<20}")
-            print("-" * 30)
-            for k, w in zip(cluster_range, wcss):
-                print(f"{k:<10} {w:<20.4f}")
+            print(f"Optimal number of clusters (elbow method): {optimal_clusters}")
 
         print("=" * 70)
 
@@ -160,30 +135,30 @@ class CClusteringAnalysis_Baseline:
         score = silhouette_score(mat, cluster_labels)
         return score
 
-    def print_silhouette_scores_for_all_algorithms(self, num_clusters=DEFAULT_NUMBER_OF_CLUSTERS):
-        """Print silhouette scores for all algorithms and baselines."""
+    def print_silhouette_scores_for_all_algorithms(self):
+        """Print silhouette scores for all algorithms using optimal cluster count from elbow method."""
         print("\n" + "=" * 70)
-        print(f"SILHOUETTE SCORES (K-Means with {num_clusters} clusters)")
+        print("SILHOUETTE SCORES (K-Means with optimal clusters from elbow method)")
         print("=" * 70)
         print("Score interpretation: 1 = well separated, 0 = overlapping, -1 = wrong assignment")
         print("-" * 70)
 
-        all_alg_ids = self.ALGORITHM_IDS + [self.RAW_ALG_ID]
         alg_names = {2: "Algorithm 2", 3: "Algorithm 3", 11: "PCA Baseline", 21: "Raw Tool Counts"}
 
         results = []
-        for alg_id in all_alg_ids:
-            score = self.compute_silhouette_score(alg_id, num_clusters)
-            results.append((alg_id, alg_names[alg_id], score))
+        for alg_id in self.ALGORITHM_IDS:
+            _, _, optimal_clusters = self.compute_wcss(alg_id)
+            score = self.compute_silhouette_score(alg_id, optimal_clusters)
+            results.append((alg_id, alg_names[alg_id], optimal_clusters, score))
 
-        print(f"\n{'Algorithm':<25} {'ID':<8} {'Silhouette Score':<20}")
-        print("-" * 55)
+        print(f"\n{'Algorithm':<25} {'ID':<8} {'Optimal K':<12} {'Silhouette Score':<20}")
+        print("-" * 65)
 
-        for alg_id, name, score in results:
+        for alg_id, name, optimal_k, score in results:
             if score is not None:
-                print(f"{name:<25} {alg_id:<8} {score:<20.6f}")
+                print(f"{name:<25} {alg_id:<8} {optimal_k:<12} {score:<20.6f}")
             else:
-                print(f"{name:<25} {alg_id:<8} {'N/A':<20}")
+                print(f"{name:<25} {alg_id:<8} {optimal_k:<12} {'N/A':<20}")
 
         print("=" * 70)
 
@@ -193,20 +168,19 @@ class CClusteringAnalysis_Baseline:
         print(f"SILHOUETTE SCORES FOR CLUSTER RANGE ({min_clusters} to {max_clusters})")
         print("=" * 70)
 
-        all_alg_ids = self.ALGORITHM_IDS + [self.RAW_ALG_ID]
         alg_names = {2: "Alg 2", 3: "Alg 3", 11: "PCA", 21: "Raw"}
 
         # Print header
         header = f"{'Clusters':<10}"
-        for alg_id in all_alg_ids:
+        for alg_id in self.ALGORITHM_IDS:
             header += f"{alg_names[alg_id]:<15}"
         print(header)
-        print("-" * (10 + 15 * len(all_alg_ids)))
+        print("-" * (10 + 15 * len(self.ALGORITHM_IDS)))
 
         # Print scores for each cluster count
         for num_clusters in range(min_clusters, max_clusters + 1):
             row = f"{num_clusters:<10}"
-            for alg_id in all_alg_ids:
+            for alg_id in self.ALGORITHM_IDS:
                 score = self.compute_silhouette_score(alg_id, num_clusters)
                 if score is not None:
                     row += f"{score:<15.6f}"
@@ -217,7 +191,7 @@ class CClusteringAnalysis_Baseline:
         print("=" * 70)
 
     # ==================== MAIN ANALYSIS ====================
-    def print_full_analysis(self, num_clusters=DEFAULT_NUMBER_OF_CLUSTERS):
+    def print_full_analysis(self):
         """Run full clustering analysis."""
         print("\n" + "=" * 70)
         print("CLUSTERING ANALYSIS: ALGORITHMS VS BASELINES")
@@ -226,8 +200,8 @@ class CClusteringAnalysis_Baseline:
         # WCSS for optimal cluster selection
         self.print_wcss_for_all_algorithms()
 
-        # Silhouette scores for specified number of clusters
-        self.print_silhouette_scores_for_all_algorithms(num_clusters)
+        # Silhouette scores for optimal number of clusters
+        self.print_silhouette_scores_for_all_algorithms()
 
         # Silhouette scores for range of clusters
         self.print_silhouette_scores_for_range()
@@ -235,5 +209,5 @@ class CClusteringAnalysis_Baseline:
 
 if __name__ == "__main__":
     print("Running Clustering Analysis for Algorithms and Baselines...")
-    analysis = CClusteringAnalysis_Baseline()
-    analysis.print_full_analysis(num_clusters=3)
+    analysis = CClusteringAnalysis_Baselines_All()
+    analysis.print_full_analysis()
