@@ -90,7 +90,8 @@ class CClusteringAnalysis_Baselines_All:
 
         for alg_id in self.ALGORITHM_IDS:
             cluster_range, wcss, optimal_clusters = self.compute_wcss(alg_id, max_clusters)
-            print(f"\n*** {alg_names[alg_id]} (ID: {alg_id}) ***")
+            shape = tuple(self.embeddings_by_alg[alg_id].shape)
+            print(f"\n*** {alg_names[alg_id]} (ID: {alg_id}) {shape} ***")
             print(f"Optimal number of clusters (elbow method): {optimal_clusters}")
 
         print("=" * 70)
@@ -149,16 +150,17 @@ class CClusteringAnalysis_Baselines_All:
         for alg_id in self.ALGORITHM_IDS:
             _, _, optimal_clusters = self.compute_wcss(alg_id)
             score = self.compute_silhouette_score(alg_id, optimal_clusters)
-            results.append((alg_id, alg_names[alg_id], optimal_clusters, score))
+            shape = tuple(self.embeddings_by_alg[alg_id].shape)
+            results.append((alg_id, alg_names[alg_id], shape, optimal_clusters, score))
 
-        print(f"\n{'Algorithm':<25} {'ID':<8} {'Optimal K':<12} {'Silhouette Score':<20}")
-        print("-" * 65)
+        print(f"\n{'Algorithm':<25} {'Shape':<18} {'ID':<8} {'Optimal K':<12} {'Silhouette Score':<20}")
+        print("-" * 83)
 
-        for alg_id, name, optimal_k, score in results:
+        for alg_id, name, shape, optimal_k, score in results:
             if score is not None:
-                print(f"{name:<25} {alg_id:<8} {optimal_k:<12} {score:<20.6f}")
+                print(f"{name:<25} {str(shape):<18} {alg_id:<8} {optimal_k:<12} {score:<20.6f}")
             else:
-                print(f"{name:<25} {alg_id:<8} {optimal_k:<12} {'N/A':<20}")
+                print(f"{name:<25} {str(shape):<18} {alg_id:<8} {optimal_k:<12} {'N/A':<20}")
 
         print("=" * 70)
 
@@ -168,14 +170,20 @@ class CClusteringAnalysis_Baselines_All:
         print(f"SILHOUETTE SCORES FOR CLUSTER RANGE ({min_clusters} to {max_clusters})")
         print("=" * 70)
 
-        alg_names = {2: "Alg 2", 3: "Alg 3", 11: "PCA", 21: "Raw"}
+        # Build names with shape
+        alg_labels = {}
+        for alg_id in self.ALGORITHM_IDS:
+            shape = tuple(self.embeddings_by_alg[alg_id].shape)
+            base = {2: "Alg 2", 3: "Alg 3", 11: "PCA", 21: "Raw"}
+            alg_labels[alg_id] = f"{base[alg_id]} {shape}"
 
         # Print header
+        col_width = 22
         header = f"{'Clusters':<10}"
         for alg_id in self.ALGORITHM_IDS:
-            header += f"{alg_names[alg_id]:<15}"
+            header += f"{alg_labels[alg_id]:<{col_width}}"
         print(header)
-        print("-" * (10 + 15 * len(self.ALGORITHM_IDS)))
+        print("-" * (10 + col_width * len(self.ALGORITHM_IDS)))
 
         # Print scores for each cluster count
         for num_clusters in range(min_clusters, max_clusters + 1):
@@ -183,9 +191,9 @@ class CClusteringAnalysis_Baselines_All:
             for alg_id in self.ALGORITHM_IDS:
                 score = self.compute_silhouette_score(alg_id, num_clusters)
                 if score is not None:
-                    row += f"{score:<15.6f}"
+                    row += f"{score:<{col_width}.6f}"
                 else:
-                    row += f"{'N/A':<15}"
+                    row += f"{'N/A':<{col_width}}"
             print(row)
 
         print("=" * 70)

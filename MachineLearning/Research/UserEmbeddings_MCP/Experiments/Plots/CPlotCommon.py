@@ -183,6 +183,41 @@ class CPlotCommon:
         #save plot as image
         CPlotCommon.save_or_display_plot(plt,title,saveFile)
 
+    @staticmethod
+    def plot_multi_line_xy(x,
+                           y_series: dict,
+                           title="Multi-Line Plot",
+                           xlabel="x",
+                           ylabel="y",
+                           saveFile=False):
+        """
+        Plot multiple line series on the same axes with distinct markers and a legend.
+
+        Args:
+            x: Shared x-axis values (list or array).
+            y_series: Dictionary mapping series name (str) to list of y values.
+            title: Plot title (also used for file name when saving).
+            xlabel: X-axis label.
+            ylabel: Y-axis label.
+            saveFile: If True, save plot as SVG.
+        """
+        markers = ['o', 's', '^', 'D', 'v', 'p', '*', 'h']
+
+        plt.figure(figsize=(10, 6))
+
+        for idx, (name, y_values) in enumerate(y_series.items()):
+            marker = markers[idx % len(markers)]
+            plt.plot(x, y_values, marker=marker, linestyle='-',
+                     linewidth=2, markersize=7, label=name)
+
+        plt.xlabel(xlabel, fontsize=12)
+        plt.ylabel(ylabel, fontsize=12)
+        plt.xticks(x)
+        plt.legend(fontsize=10, loc='best')
+        plt.grid(True, alpha=0.3)
+
+        CPlotCommon.save_or_display_plot(plt, title, saveFile)
+
 # For Testing
 if __name__ == "__main__":
     x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
