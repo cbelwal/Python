@@ -591,4 +591,4 @@ if __name__ == "__main__":
     # Uncomment below to run full analysis (requires database)
     print("\nRunning L2-Normalized Embedding Baseline Analysis (All 4 Algorithms)...")
     analysis = CDistanceAnalysis_Baselines_L2()
-    analysis.print_all_baseline_analysis(include_all_users=False)
+    analysis.print_all_baseline_analysis(include_all_users=True)
