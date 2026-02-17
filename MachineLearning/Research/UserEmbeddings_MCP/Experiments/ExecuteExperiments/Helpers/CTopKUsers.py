@@ -69,8 +69,8 @@ class CTopKUsers:
                 cosine_distances.append((other_id, cosine_dist))
                 euclidean_distances.append((other_id, euclidean_dist))
 
-            cosine_distances.sort(key=lambda x: x[1])
-            euclidean_distances.sort(key=lambda x: x[1])
+            cosine_distances.sort(key=lambda x: x[1], reverse=True)
+            euclidean_distances.sort(key=lambda x: x[1], reverse=True)
 
             results[alg_id] = {
                 'cosine': cosine_distances[:k],
@@ -102,9 +102,11 @@ class CTopKUsers:
             print(f"  Top {k} by Cosine Distance:    {[uid for uid, _ in top_k_cosine]}")
             for uid, dist in top_k_cosine:
                 print(f"    User {uid:5d} -> {self.format_distance(dist)}")
+            print(f"    LaTeX: {' & '.join(str(uid) for uid, _ in top_k_cosine)}")
             print(f"  Top {k} by Euclidean Distance: {[uid for uid, _ in top_k_euclidean]}")
             for uid, dist in top_k_euclidean:
                 print(f"    User {uid:5d} -> {self.format_distance(dist)}")
+            print(f"    LaTeX: {' & '.join(str(uid) for uid, _ in top_k_euclidean)}")
 
         print("=" * 70)
         return results
