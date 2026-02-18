@@ -1,6 +1,10 @@
 # Z-Score Normalization with Pooled Reference
 # This class pools data from multiple datasets to create a common reference
 # for z-score normalization, enabling meaningful comparisons across datasets.
+
+##########################
+# CAUTION: This is not used in the paper, was done for ref. only
+##########################
 import os
 import sys
 import numpy as np
