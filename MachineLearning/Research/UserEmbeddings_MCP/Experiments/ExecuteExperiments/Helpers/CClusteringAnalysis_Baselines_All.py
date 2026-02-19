@@ -13,9 +13,9 @@ sys.path.append(topRootPath)
 #----------------------------------------------
 from Experiments.Database.CDatabaseManager import CDatabaseManager
 from Experiments.ExecuteExperiments.Helpers.CResultsStore import CResultsStore
+from Experiments.ExecuteExperiments.Helpers.CClusteringAnalysis import CClusteringAnalysis
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-from kneed import KneeLocator
 import torch
 import numpy as np
 
@@ -62,23 +62,8 @@ class CClusteringAnalysis_Baselines_All:
             kmeans.fit(mat)
             wcss.append(kmeans.inertia_)
 
-        optimal_clusters = self._find_elbow_point(list(cluster_range), wcss)
+        optimal_clusters = CClusteringAnalysis._find_elbow_point(list(cluster_range), wcss)
         return list(cluster_range), wcss, optimal_clusters
-
-    def _find_elbow_point(self, cluster_range: list, wcss: list) -> int:
-        """
-        Determine the optimal number of clusters by finding the elbow point in WCSS.
-        Uses the kneed library's KneeLocator to detect the elbow.
-        """
-        kneedle = KneeLocator(
-            x=cluster_range,
-            y=wcss,
-            curve='convex',
-            direction='decreasing'
-        )
-
-        # Return the elbow point, default to 2 if no elbow is found
-        return kneedle.elbow if kneedle.elbow is not None else 2
 
     def print_wcss_for_all_algorithms(self, max_clusters=MAX_NUMBER_OF_CLUSTERS):
         """Print WCSS values for all algorithms and baselines."""

@@ -111,8 +111,8 @@ class CPlotExperimentalData:
         print(f"Generating clustering plots...")
         clustering = CClusteringAnalysis(self.MAT_E)
         print("Determining optimal number of clusters using elbow method...")
-        wcss = clustering.determine_optimal_number_of_clusters_elbow()
-        
+        wcss, optimal_clusters = clustering.determine_optimal_number_of_clusters_elbow()
+
         #-------------- Plot WCSS vs number of clusters
         CPlotCommon.plot_line_y(wcss,
                                  title=f"Algorithm {self.algID}:WCSS vs Number of clusters",
@@ -120,19 +120,25 @@ class CPlotExperimentalData:
                                  ylabel="Within Cluster Sum of Squares (WCSS)",
                                  xstart=0,
                                  saveFile=True)
-        
-        # Get index of lowest WCSS value
-        optimal_clusters = wcss.index(min(wcss)) + 1 # +1 as index starts from 0
-        print(f"Optimal number of clusters determined from WCSS: {optimal_clusters}")
+
+        print(f"Algorithm {self.algID}: Optimal number of clusters (kneed elbow): {optimal_clusters}, MAT_E shape: {tuple(self.MAT_E.shape)}")
         (cluster_labels, cluster_centroids) = clustering.generate_kmeans_clustering(num_clusters=optimal_clusters)
-        
-        # split embeddings into two lists for plotting
-        # X will contains all value in PCA dim 1
-        # Y will contains all value in PCA dim 2
-        X = [X_Coord[0].item() for X_Coord in cluster_centroids]
-        Y = [Y_Coord[1].item() for Y_Coord in cluster_centroids]
-         
-        #print(cluster_centroids)
+
+        # Project high-dimensional centroids to 2D via PCA fitted on all embeddings
+        from sklearn.decomposition import PCA
+        from sklearn.preprocessing import StandardScaler
+        scaler = StandardScaler()
+        scaler.fit(self.MAT_E)
+        pca = PCA(n_components=2)
+        pca.fit(scaler.transform(self.MAT_E))
+        centroids_2d = pca.transform(scaler.transform(cluster_centroids))
+
+        X = [coord[0] for coord in centroids_2d]
+        Y = [coord[1] for coord in centroids_2d]
+
+        for i, (cx, cy) in enumerate(zip(X, Y)):
+            print(f"  Centroid {i}: ({cx},{cy})")
+
         CPlotCommon.plot_scatter_xy(X,
                                     Y,
                                  title=f"Algorithm {self.algID}:Embedding Cluster Centroids",

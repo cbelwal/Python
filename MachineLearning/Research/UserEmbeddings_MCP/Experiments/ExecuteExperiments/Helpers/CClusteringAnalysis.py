@@ -16,7 +16,7 @@ from kneed import KneeLocator
 import torch
 import numpy as np
 
-MAX_NUMBER_OF_CLUSTERS = 8
+MAX_NUMBER_OF_CLUSTERS = 10
 GIVEN_NUMBER_OF_CLUSTERS = 1
 
 class CClusteringAnalysis:
@@ -32,26 +32,25 @@ class CClusteringAnalysis:
         # Within-cluster sum of squares (WCSS) / Inertia
         wcss = []  # Within-cluster sum of squares
         no_of_samples = self.MAT_E.shape[0]
-        for n_clusters in range(1, max_clusters + 1):
-            if n_clusters > no_of_samples:
-                break
-            kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init='auto')
+        cluster_range = range(2, min(max_clusters + 1, no_of_samples))
+        for n_clusters in cluster_range:
+            kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto')
             kmeans.fit(self.MAT_E.numpy())
             wcss.append(kmeans.inertia_)
-        
-        optimal_clusters = self._find_elbow_point(wcss, max_clusters)
+
+        optimal_clusters = self._find_elbow_point(list(cluster_range), wcss)
         print(f"Optimal number of clusters (elbow method): {optimal_clusters}")
 
-        return wcss
+        return wcss, optimal_clusters
 
-    def _find_elbow_point(self, wcss: list, max_clusters: int) -> int:
+    @staticmethod
+    def _find_elbow_point(cluster_range: list, wcss: list) -> int:
         """
         Determine the optimal number of clusters by finding the elbow point in WCSS.
         Uses the kneed library's KneeLocator to detect the elbow.
         """
-        k_range = range(1, len(wcss) + 1)
         kneedle = KneeLocator(
-            x=list(k_range),
+            x=cluster_range,
             y=wcss,
             curve='convex',
             direction='decreasing'
@@ -62,7 +61,7 @@ class CClusteringAnalysis:
 
     # Default distance metric is Euclidean
     def generate_kmeans_clustering(self,num_clusters:int=GIVEN_NUMBER_OF_CLUSTERS):
-        kmeans = KMeans(n_clusters=num_clusters, random_state=0, n_init=10) # n_init for robust centroid initialization
+        kmeans = KMeans(n_clusters=num_clusters, random_state=42, n_init=10) # n_init for robust centroid initialization
         
         print("Fitting KMeans clustering...")
         kmeans.fit(self.MAT_E) #.numpy())
@@ -88,7 +87,9 @@ if __name__ == "__main__":
     MAT_E[2][2] = 1 # user 1, tool 2
     
     analysis = CClusteringAnalysis(MAT_E)
-    print("WCSS:",analysis.determine_optimal_number_of_clusters_elbow())
+    wcss, optimal_clusters = analysis.determine_optimal_number_of_clusters_elbow()
+    print("WCSS:", wcss)
+    print("Optimal clusters:", optimal_clusters)
     
     #(cluster_labels, cluster_centroids) = analysis.generate_kmeans_clustering()   
     #print(cluster_centroids)    
