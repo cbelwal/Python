@@ -148,7 +148,7 @@ class CPlotExperimentalData:
 
 # Testing
 if __name__ == "__main__":
-    algID = 2
+    algID = 3
     plotter = CPlotExperimentalData(algID=algID)
     #plotter.plot_canary_users()
     #plotter.plot_training_loss()
