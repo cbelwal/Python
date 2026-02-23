@@ -67,10 +67,10 @@ class CTestData_Simple(IUserToolMatrix):
 # For local testing only
 if __name__== "__main__":
     testData = CTestData_Simple()
-    #(MAT_E,loss_for_user) = Algorithm_3_GenerateUserEmbeddings(embeddingDimensions=32,
-    #                                           testData=testData)
-    (MAT_E,loss_for_user) = Alg_Baseline_PCA_GenerateUserEmbeddings(embeddingDimensions=2,
+    (MAT_E,loss_for_user) = Algorithm_3_GenerateUserEmbeddings(embeddingDimensions=32,
                                                testData=testData)
+    #(MAT_E,loss_for_user) = Alg_Baseline_PCA_GenerateUserEmbeddings(embeddingDimensions=2,
+    #                                           testData=testData)
     '''
     In PyTorch, the .item() method is used to extract the value 
     from a single-element tensor and convert it into a standard 
