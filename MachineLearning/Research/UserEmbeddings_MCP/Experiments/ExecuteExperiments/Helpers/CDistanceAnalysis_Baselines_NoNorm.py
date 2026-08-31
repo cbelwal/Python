@@ -1,11 +1,11 @@
 # Computes raw (unnormalized) Cosine and Euclidean distances for embeddings from:
-# Algorithms 2, 3, PCA Baseline (11), and Raw Tool Counts (21)
+# Algorithms 2, 3, 4, PCA Baseline (11), and Raw Tool Counts (21)
 # No normalization is applied to embeddings or distances.
 # Reports mean, SD, min and max of the raw distance values.
 #----------------------
 # There is no normalization here. 
 # 
-# For algorithms 2 and 3, we also compute an optional [0,1] min-max scaling of the embeddings before computing distances, 
+# For algorithms 2, 3, and 4, we also compute an optional [0,1] min-max scaling of the embeddings before computing distances,
 # to show how much the scale of the original embeddings affects the distance 
 # distributions. For algorithm 11 (PCA baseline) and 21 (raw tool counts), 
 # we only compute raw distances since they are already on a different scale.
@@ -13,6 +13,7 @@
 # This is not used in the main paper, and is used only for comparison purposes.
 
 import math
+import os
 import torch
 import numpy as np
 from typing import Dict, List
@@ -32,18 +33,18 @@ from Algorithms.Alg_Data_Raw import Algorithm_Data_Raw
 # No normalization of embeddings or distances
 class CDistanceAnalysis_Baselines_NoNorm:
     # Algorithms with tensor embeddings
-    TENSOR_ALGORITHM_IDS = [2, 3, 11]
+    TENSOR_ALGORITHM_IDS = [2, 3, 4, 11]
     # Raw tool counts algorithm (uses sparse dictionary format)
     RAW_ALG_ID = 21
     # All algorithms for display
-    ALL_ALGORITHM_IDS = [2, 3, 11, 21]
+    ALL_ALGORITHM_IDS = [2, 3, 4, 11, 21]
 
     def __init__(self):
         self.dbManager = CDatabaseManager()
         self.canary_users = self.dbManager.get_canary_users()
         self.all_user_ids = self.dbManager.get_all_user_ids()
 
-        # Load tensor embeddings for algorithms 2, 3, 11
+        # Load tensor embeddings for algorithms 2, 3, 4, 11
         self.embeddings_by_alg = {}
         for alg_id in self.TENSOR_ALGORITHM_IDS:
             store = CResultsStore(algID=alg_id)
@@ -197,13 +198,13 @@ class CDistanceAnalysis_Baselines_NoNorm:
         """
         Helper function to collect pairwise distances for ALL algorithms (2, 3, 11, 21).
         Always computes raw (unscaled) distances. When scale_alg_2_3 is True, also
-        computes distances on [0,1]-scaled embeddings for algorithms 2 and 3.
+        computes distances on [0,1]-scaled embeddings for algorithms 2, 3, and 4.
 
         Args:
             user_ids: List of user IDs.
             description: Description string for print output.
             scale_alg_2_3: If True, also compute distances with [0,1] min-max scaling
-                           for algorithms 2 and 3.
+                           for algorithms 2, 3, and 4.
 
         Returns:
             (raw_cosine, raw_euclidean, scaled_cosine, scaled_euclidean) dictionaries.
@@ -213,7 +214,7 @@ class CDistanceAnalysis_Baselines_NoNorm:
         print(f"\n  Computing pairwise distances for {description}...")
         print(f"  Users: {len(user_ids)}, Pairs per algorithm: {len(user_ids) * (len(user_ids) - 1) // 2}")
         if scale_alg_2_3:
-            print(f"  [0,1] scaling enabled for Algorithms 2 and 3")
+            print(f"  [0,1] scaling enabled for Algorithms 2, 3, and 4")
 
         raw_cosine = {}
         raw_euclidean = {}
@@ -231,8 +232,8 @@ class CDistanceAnalysis_Baselines_NoNorm:
             raw_cosine[key] = cos_raw
             raw_euclidean[key] = euc_raw
 
-            # Scaled distances for algorithms 2 and 3
-            if scale_alg_2_3 and alg_id in (2, 3):
+            # Scaled distances for learned embedding algorithms
+            if scale_alg_2_3 and alg_id in (2, 3, 4):
                 MAT_E_scaled = self.scale_to_unit_range(MAT_E_raw)
                 cos_scaled, euc_scaled = self.compute_pairwise_distances_for_user_group(
                     user_ids, MAT_E_scaled
@@ -342,7 +343,7 @@ class CDistanceAnalysis_Baselines_NoNorm:
             return
 
         print("\n" + "=" * 80)
-        print("RAW DISTANCES WITHIN CANARY 1 GROUP (Algorithms 2, 3, 11, 21)")
+        print("RAW DISTANCES WITHIN CANARY 1 GROUP (Algorithms 2, 3, 4, 11, 21)")
         print("=" * 80)
 
         raw_cos, raw_euc, scaled_cos, scaled_euc = self._collect_distances_for_all_algorithms(
@@ -364,7 +365,7 @@ class CDistanceAnalysis_Baselines_NoNorm:
             return
 
         print("\n" + "=" * 80)
-        print("RAW DISTANCES WITHIN CANARY 2 GROUP (Algorithms 2, 3, 11, 21)")
+        print("RAW DISTANCES WITHIN CANARY 2 GROUP (Algorithms 2, 3, 4, 11, 21)")
         print("=" * 80)
 
         raw_cos, raw_euc, scaled_cos, scaled_euc = self._collect_distances_for_all_algorithms(
@@ -386,7 +387,7 @@ class CDistanceAnalysis_Baselines_NoNorm:
             return
 
         print("\n" + "=" * 80)
-        print("RAW DISTANCES FOR ALL USERS (Algorithms 2, 3, 11, 21)")
+        print("RAW DISTANCES FOR ALL USERS (Algorithms 2, 3, 4, 11, 21)")
         print("=" * 80)
 
         raw_cos, raw_euc, scaled_cos, scaled_euc = self._collect_distances_for_all_algorithms(
@@ -406,19 +407,19 @@ class CDistanceAnalysis_Baselines_NoNorm:
         - Raw distances for all users (controlled by include_all_users flag)
 
         No normalization is applied to embeddings or distances.
-        For algorithms 2 and 3, embeddings are optionally min-max scaled to [0, 1]
+        For algorithms 2, 3, and 4, embeddings are optionally min-max scaled to [0, 1]
         per dimension before computing distances.
 
         Args:
             include_all_users: If True, compute distances for all users
                               (can be very slow for large datasets)
             scale_alg_2_3: If True (default), apply [0,1] min-max scaling to
-                          algorithms 2 and 3 embeddings before computing distances.
+                          algorithms 2, 3, and 4 embeddings before computing distances.
         """
         print("\n" + "=" * 80)
-        print("   RAW (UNNORMALIZED) EMBEDDING BASELINE ANALYSIS (Algorithms 2, 3, 11, 21)")
+        print("   RAW (UNNORMALIZED) EMBEDDING BASELINE ANALYSIS (Algorithms 2, 3, 4, 11, 21)")
         if scale_alg_2_3:
-            print("   [0,1] scaling enabled for Algorithms 2 and 3")
+            print("   [0,1] scaling enabled for Algorithms 2, 3, and 4")
         print("=" * 80 + "\n")
 
         # ---- CANARY 1 ----

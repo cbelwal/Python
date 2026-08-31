@@ -1,5 +1,5 @@
 """
-Clustering analysis for comparing algorithms (2, 3) and baselines (11 PCA, 21 Raw)
+Clustering analysis for comparing algorithms (2, 3, 4) and baselines (11 PCA, 21 Raw)
 Computes optimal clusters using WCSS and silhouette scores using K-Means
 """
 import os,sys
@@ -23,8 +23,8 @@ MAX_NUMBER_OF_CLUSTERS = 10
 DEFAULT_NUMBER_OF_CLUSTERS = 3
 
 class CClusteringAnalysis_Baselines_All:
-    # Algorithm IDs: 2, 3 are main algorithms; 11 is PCA baseline; 21 is raw tool counts
-    ALGORITHM_IDS = [2, 3, 11, 21]
+    # Algorithm IDs: 2, 3, 4 are main algorithms; 11 is PCA baseline; 21 is raw tool counts
+    ALGORITHM_IDS = [2, 3, 4, 11, 21]
 
     def __init__(self):
         self.dbManager = CDatabaseManager()

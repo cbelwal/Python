@@ -15,7 +15,7 @@ def generate_plots_for_experiment_data(algID:int):
     plotter.generate_all_plots()
     
 if __name__ == "__main__":
-    for algID in [2,3]:
+    for algID in [2, 3, 4]:
         print(f"*** Generating plots for Algorithm {algID}...")
         generate_plots_for_experiment_data(algID=algID)
         

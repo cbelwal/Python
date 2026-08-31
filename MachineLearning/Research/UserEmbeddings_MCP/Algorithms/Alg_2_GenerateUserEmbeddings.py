@@ -1,81 +1,116 @@
 """
-Embeddings are generated using a single layer NN
+Generate user embeddings with a shared autoencoder.
 
-Since this uses the PyTorch library, the sequence of steps will vary with the paper
-
+The encoder consumes each complete user-tool vector and produces the user
+embedding. The decoder reconstructs the original vector, causing the shared
+embedding space to preserve tool-usage patterns across all users.
 """
+import os
+import sys
+
 import torch
+from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
-import os,sys
-# ----------------------------------------------
-# Explicit declaration to ensure the root folder path is in sys.path 
-topRootPath = os.path.dirname(
-              os.path.dirname(os.path.abspath(__file__)))
+topRootPath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(topRootPath)
-#----------------------------------------------
-from Algorithms.Helpers.CSingleLayer import CSingleLayer
-from Algorithms.Helpers.CModelTraining import CModelTraining
-from Algorithms.Helpers.IUserToolMatrix import IUserToolMatrix  
 
-MAX_EPOCHS = 1000
-LEARNING_RATE = 0.01
-SCALING_FACTOR = 1.0
-MIN_TARGET_LOSS = 1e-4
+from Algorithms.Helpers.CUserToolAutoencoder import CUserToolAutoencoder
+from Algorithms.Helpers.IUserToolMatrix import IUserToolMatrix
+
+MAX_EPOCHS = 100
+LEARNING_RATE = 1e-3
+BATCH_SIZE = 256
+MIN_TARGET_LOSS = 1e-6
+ACTIVE_TOOL_WEIGHT = 10.0
+ACTIVE_TOOL_THRESHOLD = 1e-4
+RANDOM_SEED = 1
 
 
-def Algorithm_2_GenerateUserEmbeddings(embeddingDimensions:int=8,
-                                       testData: IUserToolMatrix = None):
-    MAT_u_tau = testData.get_MAT_u_tau()
+def _weighted_reconstruction_loss(reconstructed, target, reduction: str = "mean"):
+    weights = torch.where(
+        target > ACTIVE_TOOL_THRESHOLD,
+        ACTIVE_TOOL_WEIGHT,
+        1.0,
+    )
+    losses = weights * (reconstructed - target).pow(2)
+    if reduction == "none":
+        return losses.mean(dim=1)
+    return losses.mean()
 
-    # Multiply all values by a scaling factor to improve training stability
-    
-    MAT_u_tau = MAT_u_tau * SCALING_FACTOR
 
-    print("Starting Model Training")
-    # MATx shape: (4,2), MAT_tau_u shape: (3,2)
-    MATx = torch.ones(embeddingDimensions, testData.NumberOfTools)
-    #tmpMATx = torch.ones(embeddingDimensions)
-    
+def Algorithm_2_GenerateUserEmbeddings(
+    embeddingDimensions: int = 8,
+    testData: IUserToolMatrix = None,
+):
+    if testData is None:
+        raise ValueError("testData is required")
+    if embeddingDimensions <= 0:
+        raise ValueError("embeddingDimensions must be greater than zero")
+
+    MAT_u_tau = testData.get_MAT_u_tau().float()
+    if MAT_u_tau.ndim != 2:
+        raise ValueError("The user-tool matrix must be two-dimensional")
+    if MAT_u_tau.shape != (testData.NumberOfUsers, testData.NumberOfTools):
+        raise ValueError(
+            "The user-tool matrix shape does not match NumberOfUsers and NumberOfTools"
+        )
+    if testData.NumberOfUsers <= 0 or testData.NumberOfTools <= 0:
+        raise ValueError("The user-tool matrix must contain users and tools")
+
+    torch.manual_seed(RANDOM_SEED)
+    model = CUserToolAutoencoder(
+        numberOfTools=testData.NumberOfTools,
+        embeddingDimensions=embeddingDimensions,
+    )
+    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
+
+    generator = torch.Generator().manual_seed(RANDOM_SEED)
+    trainingLoader = DataLoader(
+        TensorDataset(MAT_u_tau),
+        batch_size=min(BATCH_SIZE, testData.NumberOfUsers),
+        shuffle=True,
+        generator=generator,
+    )
+
+    print("Starting Shared Autoencoder Training")
+    model.train()
+    for _ in tqdm(range(MAX_EPOCHS)):
+        epochLoss = 0.0
+        for (batch,) in trainingLoader:
+            optimizer.zero_grad()
+            reconstructed, _ = model(batch)
+            loss = _weighted_reconstruction_loss(reconstructed, batch)
+            loss.backward()
+            optimizer.step()
+            epochLoss += loss.item() * batch.shape[0]
+
+        epochLoss /= testData.NumberOfUsers
+        if epochLoss < MIN_TARGET_LOSS:
+            break
+
     MAT_E = torch.zeros(testData.NumberOfUsers, embeddingDimensions)
     loss_for_each_user = torch.zeros(testData.NumberOfUsers)
-    # Train the model for each user
-    for i in tqdm(range(0,testData.NumberOfUsers)):
-        # Model will take the embedding dimenssions as input and return a single output containing value from  tool call.
-        model = CSingleLayer(embeddingDimensions)
-        
-        # Get the ith row of MAT_tau_u
-        # .view: reshape the tensor to be of shape (1, totalNumberOfTools)
-        # the elements will be the same, just the shape will be different
-        tmpMAT_u_tau = MAT_u_tau[i].view(1, testData.NumberOfTools)
-        
-        # Input values of MATx should be in shape (noOfTools, noOfEmbeddings)
-        # nn.linear expects the x input to be as a column vector
-        # E.g. if there are 4 embeddings and 2 tools, then the input should be of shape (2,4)
-        # and output will be of shape (2,1) 
-        # nn.linear with treat the 2 tools as 2 independent samples which will me compared against
-        # the value in MAT_tau_u
-        # The 1st tool will be compared against 1st row in MAT_tau_u, 2nd on 2nd row
-        # and so on. 
-        # The Transpose operation is required to get them in the required shape
-        #print("****\n",tmpMAT_u_tau)
+    inferenceLoader = DataLoader(
+        TensorDataset(MAT_u_tau),
+        batch_size=min(BATCH_SIZE, testData.NumberOfUsers),
+        shuffle=False,
+    )
 
-        (model,loss) = CModelTraining.train(model, 
-                                            MATx.T, 
-                                            tmpMAT_u_tau.T, 
-                                            max_epochs=MAX_EPOCHS,
-                                            min_target_loss = MIN_TARGET_LOSS, 
-                                            lr=LEARNING_RATE)
-        loss_for_each_user[i] = loss.detach().clone() #torch.tensor(loss, dtype=torch.float32)
+    model.eval()
+    offset = 0
+    with torch.no_grad():
+        for (batch,) in inferenceLoader:
+            reconstructed, embeddings = model(batch)
+            batchSize = batch.shape[0]
+            MAT_E[offset:offset + batchSize] = embeddings
+            loss_for_each_user[offset:offset + batchSize] = (
+                _weighted_reconstruction_loss(
+                    reconstructed,
+                    batch,
+                    reduction="none",
+                )
+            )
+            offset += batchSize
 
-        # Print all model parameters
-        for name, param in model.named_parameters():
-            if param.requires_grad:
-                # Only store weights, not bias
-                if name == 'linear.weight':
-                    # Copy values of param.data to row i of MAT_E
-                    MAT_E[i] = param.data                      
-                    #print(name, param.data,loss)
-    return (MAT_E,loss_for_each_user)
-
-   
+    return MAT_E, loss_for_each_user

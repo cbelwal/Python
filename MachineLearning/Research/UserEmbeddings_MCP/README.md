@@ -13,7 +13,7 @@ A machine learning research system that generates low-dimensional **user embeddi
 5. [Configuration](#5-configuration)
 6. [Data: Synthetic Generation & Database](#6-data-synthetic-generation--database)
 7. [Algorithm 1: Data Preparation](#7-algorithm-1-data-preparation)
-8. [Algorithm 2: Single-Layer Neural Network Embeddings](#8-algorithm-2-single-layer-neural-network-embeddings)
+8. [Algorithm 2: Shared Autoencoder Embeddings](#8-algorithm-2-shared-autoencoder-embeddings)
 9. [Algorithm 3: Polynomial Fit Embeddings](#9-algorithm-3-polynomial-fit-embeddings)
 10. [Baseline: PCA Embeddings](#10-baseline-pca-embeddings)
 11. [Analysis & Evaluation](#11-analysis--evaluation)
@@ -72,9 +72,9 @@ An embedding is a short, dense numeric vector (e.g., 8 numbers) that summarizes 
            ▼              ▼              ▼
 ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
 │ Algorithm 2  │  │ Algorithm 3  │  │  PCA         │
-│ Neural Net   │  │ Polynomial   │  │  Baseline    │
-│ (single-     │  │ Fit          │  │              │
-│  layer NN)   │  │              │  │              │
+│ Shared       │  │ Polynomial   │  │  Baseline    │
+│ Autoencoder  │  │ Fit          │  │              │
+│              │  │              │  │              │
 └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
        │                 │                 │
        └────────┬────────┘                 │
@@ -150,14 +150,16 @@ UserEmbeddings_MCP/
 │
 ├── Algorithms/                          # Core algorithm implementations
 │   ├── Alg_1_DataPreparation.py         # Step 1: Normalize raw interaction data
-│   ├── Alg_2_GenerateUserEmbeddings.py  # Step 2a: Single-layer NN embeddings
+│   ├── Alg_2_GenerateUserEmbeddings.py  # Step 2a: Shared autoencoder embeddings
 │   ├── Alg_3_GenerateUserEmbeddings.py  # Step 2b: Polynomial fit embeddings
+│   ├── Alg_4_GenerateUserEmbeddings.py  # Step 2c: Legacy single-layer NN
 │   ├── Alg_Baseline_PCA_GenerateUserEmbeddings.py  # PCA baseline
 │   ├── Alg_Data_Raw.py                  # Raw (unnormalized) data extraction
 │   └── Helpers/
 │       ├── IUserToolMatrix.py           # Abstract interface for data matrices
 │       ├── CDataMain.py                 # Converts dict → PyTorch tensor matrix
-│       ├── CSingleLayer.py              # PyTorch single-layer NN module
+│       ├── CUserToolAutoencoder.py      # Shared encoder/decoder model
+│       ├── CSingleLayer.py              # Legacy Algorithm 4 NN module
 │       ├── CModelTraining.py            # Training loop (SGD + MSE loss)
 │       └── CPolynomialFitReduction.py   # Polynomial coefficient extraction
 │
@@ -177,7 +179,7 @@ UserEmbeddings_MCP/
 │   │   └── __init__.py
 │   │
 │   ├── ExecuteExperiments/
-│   │   ├── RunExperiments_Algorithms.py # MAIN ENTRY POINT: run algs 2 & 3
+│   │   ├── RunExperiments_Algorithms.py # MAIN ENTRY POINT: run algs 2, 3 & 4
 │   │   ├── RunExperiments_Baseline_PCA.py  # Entry point: run PCA baseline
 │   │   ├── PlotExperimentalData.py      # MAIN ENTRY POINT: generate all plots
 │   │   ├── PlotBaselineClustering.py    # Entry point: plot PCA baseline results
@@ -332,63 +334,69 @@ Most users only interact with a small fraction of the ~5,000 total tools availab
 
 ---
 
-## 8. Algorithm 2: Single-Layer Neural Network Embeddings
+## 8. Algorithm 2: Shared Autoencoder Embeddings
 
 **File:** `Algorithms/Alg_2_GenerateUserEmbeddings.py`
 
 ### Concept
 
-For each user, we train a tiny neural network whose *weights* become the user's embedding. The network is trained to reconstruct the user's tool usage profile from the embedding vector.
+A single autoencoder is trained across all users. Its encoder compresses each complete user-tool usage vector into a fixed-size embedding, and its decoder reconstructs the original vector.
 
 ### Architecture
 
 ```
-Embedding vector (8 values)  ──→  Linear Layer (8 → 1)  ──→  Sigmoid  ──→  predicted tool usage
+User-tool vector → Linear/ReLU → embedding → Linear/ReLU/Linear/Sigmoid → reconstructed vector
 ```
 
-- **Input:** An 8-dimensional embedding vector `e` (what we want to learn)
-- **Layer:** A linear layer `W` with shape `(8, num_tools)` — one column per tool
-- **Activation:** Sigmoid (squashes output to [0, 1])
-- **Loss:** Mean Squared Error between predicted and actual tool usage values
+- **Input:** One normalized vector containing every tool's usage frequency
+- **Encoder output:** The user embedding, shared in one coordinate system across users
+- **Decoder output:** A reconstruction with the same number of columns as the input
+- **Loss:** Weighted mean squared error, with observed tools weighted more heavily
 
-### Training (per user)
+### Training
 
-**File:** `Algorithms/Helpers/CModelTraining.py`
+**File:** `Algorithms/Helpers/CUserToolAutoencoder.py`
 
 ```
-For each user u:
-    Initialize random embedding e (shape: embedding_dim)
-    Initialize random tool matrix MATx (shape: embedding_dim × num_tools)
-    Repeat up to 1000 epochs:
-        predicted = sigmoid(MATx @ e)
-        loss = MSE(predicted, actual_tool_usage_vector)
-        if loss < 1e-4: stop early
-        update e via SGD (learning rate = 0.01)
-    Store final e as user u's embedding
+Initialize one shared encoder and decoder
+Repeat up to 100 epochs:
+    Read batches of complete user-tool vectors
+    Encode each vector into embedding_dim values
+    Decode each embedding back into a user-tool vector
+    Update the shared model with weighted reconstruction loss
+Run the trained encoder over every user to produce MAT_E
 ```
 
 ### Key Files
 
 | File | Role |
 |------|------|
-| `Algorithms/Helpers/CSingleLayer.py` | PyTorch `nn.Module` with one linear layer + sigmoid |
-| `Algorithms/Helpers/CModelTraining.py` | Training loop: SGD optimizer, MSE loss, early stopping |
+| `Algorithms/Helpers/CUserToolAutoencoder.py` | Shared encoder and decoder network |
+| `Algorithms/Alg_2_GenerateUserEmbeddings.py` | Batched training and embedding extraction |
 | `Algorithms/Helpers/CDataMain.py` | Converts `all_C_hat_u_1` dict → PyTorch tensor matrix |
 
 ### Hyperparameters
 
 | Parameter | Value |
 |-----------|-------|
-| MAX_EPOCHS | 1000 |
-| MIN_TARGET_LOSS | 1e-4 |
-| LEARNING_RATE | 0.01 |
-| OPTIMIZER | SGD |
-| LOSS FUNCTION | MSE |
+| MAX_EPOCHS | 100 |
+| MIN_TARGET_LOSS | 1e-6 |
+| LEARNING_RATE | 0.001 |
+| OPTIMIZER | Adam |
+| LOSS FUNCTION | Weighted MSE |
 
 ### Output
 
 - `MAT_E` — tensor of shape `(num_users, embedding_dim)` — the embedding matrix
 - `loss_for_each_user` — list of final MSE loss per user (used to evaluate convergence)
+
+### Algorithm 4: Legacy Single-Layer Neural Network
+
+**File:** `Algorithms/Alg_4_GenerateUserEmbeddings.py`
+
+Algorithm 4 preserves the former Algorithm 2 implementation. It trains a separate
+single-layer model for each user and stores that model's weights as the embedding.
+`CSingleLayer.py` and `CModelTraining.py` remain dedicated to this legacy method.
 
 ---
 
@@ -439,13 +447,13 @@ Principal Component Analysis (PCA) is a classical dimensionality reduction metho
 4. Transform all users' rows through the learned projection
 5. Result: each user has an 8-dimensional embedding
 
-### Key Difference from Algorithms 2 & 3
+### Key Difference from Algorithms 2, 3 & 4
 
-| Aspect | Alg 2 & 3 | PCA Baseline |
+| Aspect | Algorithms 2, 3 & 4 | PCA Baseline |
 |--------|-----------|-------------|
-| Training | Per-user | Global (all users at once) |
-| Method | Learned / analytical | Linear projection |
-| New users | Requires retraining | Can project without retraining |
+| Training | Shared for Alg 2; per-user for Algs 3 and 4 | Global |
+| Method | Neural / analytical | Linear projection |
+| New users | Alg 2 can encode directly; Algs 3 and 4 run independently | Can project with the fitted PCA model |
 
 **Entry point:** `Experiments/ExecuteExperiments/RunExperiments_Baseline_PCA.py`
 
@@ -544,7 +552,7 @@ python Experiments/DataGeneration/GenerateSyntheticData.py
 
 ### Step 2: Run Embedding Algorithms
 
-This runs Algorithm 1 (data prep) then Algorithms 2 and 3 (embedding generation), and saves results to `Experiments/Data/ExperimentResults/`.
+This runs Algorithm 1 (data prep) then Algorithms 2, 3, and 4, and saves results to `Experiments/Data/ExperimentResults/`.
 
 ```bash
 python Experiments/ExecuteExperiments/RunExperiments_Algorithms.py
@@ -556,7 +564,9 @@ Experiments/Data/ExperimentResults/
 ├── user_embeddings_alg_2.pt     # Algorithm 2 embeddings (PyTorch tensor)
 ├── training_loss_alg_2.pkl      # Algorithm 2 per-user loss (Pickle)
 ├── user_embeddings_alg_3.pt     # Algorithm 3 embeddings
-└── training_loss_alg_3.pkl      # Algorithm 3 per-user loss
+├── training_loss_alg_3.pkl      # Algorithm 3 per-user loss
+├── user_embeddings_alg_4.pt     # Legacy Algorithm 4 embeddings
+└── training_loss_alg_4.pkl      # Algorithm 4 per-user loss
 ```
 
 ### Step 3 (Optional): Run PCA Baseline
@@ -571,7 +581,7 @@ python Experiments/ExecuteExperiments/RunExperiments_Baseline_PCA.py
 python Experiments/ExecuteExperiments/PlotExperimentalData.py
 ```
 
-This generates all analysis plots for Algorithms 2 and 3.
+This generates all analysis plots for Algorithms 2, 3, and 4.
 
 ```bash
 # For PCA baseline plots:
@@ -595,8 +605,8 @@ python Experiments/ExecuteExperiments/PlotBaselineClustering.py
        Shape: (num_users, num_tools)
        Fill value 1e-4 for missing (unused) tools
 
-4. Algorithm 2 / 3
-   └── Reads MAT_u_tau row by row (one row per user)
+4. Algorithm 2 / 3 / 4
+   └── Reads MAT_u_tau using the strategy required by each algorithm
    └── Produces: MAT_E tensor, shape (num_users, embedding_dim)
    └── Produces: loss_for_each_user list
 
@@ -619,11 +629,13 @@ python Experiments/ExecuteExperiments/PlotBaselineClustering.py
 |------|---------|-------------|
 | `Experiments/CConfig.py` | All global constants | Scale up/down experiment size, change embedding dimensions |
 | `Algorithms/Alg_1_DataPreparation.py` | Normalization algorithm | Change how tool usage is normalized |
-| `Algorithms/Alg_2_GenerateUserEmbeddings.py` | NN embedding algorithm | Change NN architecture or training params |
+| `Algorithms/Alg_2_GenerateUserEmbeddings.py` | Shared autoencoder training | Change training parameters |
 | `Algorithms/Alg_3_GenerateUserEmbeddings.py` | Polynomial embedding algorithm | Change polynomial degree strategy |
+| `Algorithms/Alg_4_GenerateUserEmbeddings.py` | Legacy per-user NN algorithm | Reproduce or adjust the former Algorithm 2 |
 | `Algorithms/Helpers/CDataMain.py` | Sparse dict → tensor conversion | Change fill value or indexing logic |
-| `Algorithms/Helpers/CSingleLayer.py` | PyTorch NN model definition | Change network architecture |
-| `Algorithms/Helpers/CModelTraining.py` | Training loop | Change optimizer, loss, learning rate, epochs |
+| `Algorithms/Helpers/CUserToolAutoencoder.py` | Shared autoencoder model | Change encoder or decoder architecture |
+| `Algorithms/Helpers/CSingleLayer.py` | Legacy Algorithm 4 model | Change the legacy network architecture |
+| `Algorithms/Helpers/CModelTraining.py` | Legacy Algorithm 4 training loop | Change legacy optimizer, loss, or epochs |
 | `Algorithms/Helpers/CPolynomialFitReduction.py` | Polynomial fitting | Change polynomial fitting strategy |
 | `Experiments/Database/CDatabaseManager.py` | DB query interface | Add new queries or tables |
 | `Experiments/Database/CSQLLite.py` | Low-level SQLite wrapper | Change DB performance settings |
@@ -654,12 +666,11 @@ The user-tool matrix is stored as a dictionary of dictionaries rather than a den
 - Storing zeros for every unused tool would waste significant memory
 - The sparse format is converted to a dense tensor only when needed for computation
 
-### Per-User Training (Algorithms 2 & 3)
+### Shared and Per-User Training
 
-Unlike PCA (which is a global model), Algorithms 2 and 3 train a separate model for each user. This means:
-- **Pro:** The embedding is tailored to each user's specific tool distribution
-- **Pro:** New users can be embedded independently without retraining all users
-- **Con:** Slower overall (scales linearly with number of users)
+Algorithm 2 trains one shared autoencoder so all user embeddings use the same
+coordinate system. Algorithm 3 performs an independent polynomial fit per user,
+and Algorithm 4 retains the legacy per-user neural-network training strategy.
 
 ### ID Offset Convention
 
