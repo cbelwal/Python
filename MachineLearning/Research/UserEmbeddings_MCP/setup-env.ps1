@@ -45,4 +45,4 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host ""
 Write-Host "Virtual environment setup completed."
 Write-Host "Activate it with:"
-Write-Host "  & `"$activatePath`""
+Write-Host "  . `"$activatePath`""

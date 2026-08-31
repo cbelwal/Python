@@ -114,7 +114,7 @@ An embedding is a short, dense numeric vector (e.g., 8 numbers) that summarizes 
 py -m venv .venv
 
 # 2. Activate it
-.venv\Scripts\activate       # Windows CMD / PowerShell
+. .\.venv\Scripts\Activate.ps1  # Windows PowerShell
 # source .venv/bin/activate  # macOS / Linux
 
 # 3. Verify you are using the venv Python
