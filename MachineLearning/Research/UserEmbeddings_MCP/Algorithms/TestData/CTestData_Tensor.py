@@ -15,8 +15,8 @@ sys.path.append(topRootPath)
 
 from Algorithms.Helpers.IUserToolMatrix import IUserToolMatrix  
 from Experiments.ExecuteExperiments.Helpers.CDistanceFunctions import CDistanceFunctions
-from Algorithms.Alg_2_GenerateUserEmbeddings import Algorithm_2_GenerateUserEmbeddings
-from Algorithms.Alg_3_GenerateUserEmbeddings import Algorithm_3_GenerateUserEmbeddings
+from Algorithms.Alg_2_AutoEncoder import Alg_2_AutoEncoder
+from Algorithms.Alg_3_MatrixFactorization import Alg_3_MatrixFactorization
 
 FILL_VALUE = 1.0e-4
 
@@ -53,8 +53,8 @@ class CTestData_Tensor(IUserToolMatrix):
 # For local testing only
 if __name__== "__main__":
     testData = CTestData_Tensor()
-    (MAT_E,loss_for_user) = Algorithm_3_GenerateUserEmbeddings(embeddingDimensions=32,
-                                               testData=testData)
+    (MAT_E,loss_for_user) = Alg_3_MatrixFactorization(embeddingDimensions=2,
+                                                     testData=testData)
     '''
     In PyTorch, the .item() method is used to extract the value 
     from a single-element tensor and convert it into a standard 

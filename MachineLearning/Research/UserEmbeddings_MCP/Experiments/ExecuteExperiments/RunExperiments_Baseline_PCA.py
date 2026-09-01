@@ -11,7 +11,7 @@ sys.path.append(topRootPath)
 #----------------------------------------------
 
 from Algorithms.Alg_Data_Raw import Algorithm_Data_Raw
-from Algorithms.Alg_Baseline_PCA_GenerateUserEmbeddings import  Alg_Baseline_PCA_GenerateUserEmbeddings
+from Algorithms.Alg_Baseline_PCA import Alg_Baseline_PCA
 
 from Algorithms.Helpers.CDataMain import CDataMain
 from Experiments.CConfig import CConfig
@@ -24,7 +24,7 @@ def run_pca_on_synthetic_data(All_C_hat_u:dict):
     testData = CDataMain(All_C_hat_u)
     embeddingDimensions = CConfig.EMBEDDING_DIMENSIONS
    
-    (MAT_E, loss_for_each_user) = Alg_Baseline_PCA_GenerateUserEmbeddings(
+    (MAT_E, loss_for_each_user) = Alg_Baseline_PCA(
                 embeddingDimensions=embeddingDimensions,
                 testData=testData)
     print(f"Generated Embeddings with PCA") 

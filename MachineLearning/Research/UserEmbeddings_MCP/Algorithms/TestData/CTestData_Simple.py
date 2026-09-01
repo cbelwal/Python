@@ -14,9 +14,9 @@ sys.path.append(topRootPath)
 #----------------------------------------------
 
 from Algorithms.Helpers.IUserToolMatrix import IUserToolMatrix  
-from Algorithms.Alg_2_GenerateUserEmbeddings import Algorithm_2_GenerateUserEmbeddings
-from Algorithms.Alg_3_GenerateUserEmbeddings import Algorithm_3_GenerateUserEmbeddings
-from Algorithms.Alg_Baseline_PCA_GenerateUserEmbeddings import Alg_Baseline_PCA_GenerateUserEmbeddings 
+from Algorithms.Alg_2_AutoEncoder import Alg_2_AutoEncoder
+from Algorithms.Alg_3_MatrixFactorization import Alg_3_MatrixFactorization
+from Algorithms.Alg_Baseline_PCA import Alg_Baseline_PCA
 from Experiments.ExecuteExperiments.Helpers.CDistanceFunctions import CDistanceFunctions
 
 class CTestData_Simple(IUserToolMatrix):
@@ -67,9 +67,9 @@ class CTestData_Simple(IUserToolMatrix):
 # For local testing only
 if __name__== "__main__":
     testData = CTestData_Simple()
-    (MAT_E,loss_for_user) = Algorithm_3_GenerateUserEmbeddings(embeddingDimensions=32,
-                                               testData=testData)
-    #(MAT_E,loss_for_user) = Alg_Baseline_PCA_GenerateUserEmbeddings(embeddingDimensions=2,
+    (MAT_E,loss_for_user) = Alg_3_MatrixFactorization(embeddingDimensions=2,
+                                                     testData=testData)
+    #(MAT_E,loss_for_user) = Alg_Baseline_PCA(embeddingDimensions=2,
     #                                           testData=testData)
     '''
     In PyTorch, the .item() method is used to extract the value 

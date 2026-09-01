@@ -1,5 +1,5 @@
 """
-Legacy per-user single-layer neural-network embedding implementation.
+Unused legacy per-user single-layer neural-network embedding implementation.
 
 This was previously Algorithm 2. It is retained unchanged as Algorithm 4 so
 existing experimental results can still be reproduced and compared.
@@ -23,7 +23,7 @@ SCALING_FACTOR = 1.0
 MIN_TARGET_LOSS = 1e-4
 
 
-def Algorithm_4_GenerateUserEmbeddings(
+def Alg_4_SingleLayerNN(
     embeddingDimensions: int = 8,
     testData: IUserToolMatrix = None,
 ):

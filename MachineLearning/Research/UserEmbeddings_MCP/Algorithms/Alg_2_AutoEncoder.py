@@ -18,10 +18,10 @@ sys.path.append(topRootPath)
 from Algorithms.Helpers.CUserToolAutoencoder import CUserToolAutoencoder
 from Algorithms.Helpers.IUserToolMatrix import IUserToolMatrix
 
-MAX_EPOCHS = 100
-LEARNING_RATE = 1e-3
+MAX_EPOCHS = 5000
+LEARNING_RATE = 2e-2
 BATCH_SIZE = 256
-MIN_TARGET_LOSS = 1e-6
+MIN_TARGET_LOSS = 5e-5
 ACTIVE_TOOL_WEIGHT = 10.0
 ACTIVE_TOOL_THRESHOLD = 1e-4
 RANDOM_SEED = 1
@@ -39,7 +39,7 @@ def _weighted_reconstruction_loss(reconstructed, target, reduction: str = "mean"
     return losses.mean()
 
 
-def Algorithm_2_GenerateUserEmbeddings(
+def Alg_2_AutoEncoder(
     embeddingDimensions: int = 8,
     testData: IUserToolMatrix = None,
 ):

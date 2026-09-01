@@ -1,5 +1,5 @@
 # Computes Cosine and Euclidean distances for L2-normalized embeddings from:
-# Algorithms 2, 3, 4, PCA Baseline (11), and Raw Tool Counts (21)
+# Algorithms 2, 3, PCA Baseline (11), and Raw Tool Counts (21)
 # Each embedding is L2-normalized to unit length before computing distances.
 # Distance values are reported as-is (no min-max scaling).
 import os, sys
@@ -23,18 +23,18 @@ from Algorithms.Alg_Data_Raw import Algorithm_Data_Raw
 # Use L2 normalization on embeddings, report raw distances
 class CDistanceAnalysis_Baselines_L2:
     # Algorithms with tensor embeddings
-    TENSOR_ALGORITHM_IDS = [2, 3, 4, 11]
+    TENSOR_ALGORITHM_IDS = [2, 3, 11]
     # Raw tool counts algorithm (uses sparse dictionary format)
     RAW_ALG_ID = 21
     # All algorithms for display
-    ALL_ALGORITHM_IDS = [2, 3, 4, 11, 21]
+    ALL_ALGORITHM_IDS = [2, 3, 11, 21]
 
     def __init__(self):
         self.dbManager = CDatabaseManager()
         self.canary_users = self.dbManager.get_canary_users()
         self.all_user_ids = self.dbManager.get_all_user_ids()
 
-        # Load tensor embeddings for algorithms 2, 3, 4, 11
+        # Load tensor embeddings for algorithms 2, 3, and 11
         self.embeddings_by_alg = {}
         for alg_id in self.TENSOR_ALGORITHM_IDS:
             store = CResultsStore(algID=alg_id)
@@ -235,13 +235,13 @@ class CDistanceAnalysis_Baselines_L2:
         Helper function to collect pairwise distances for ALL algorithms (2, 3, 11, 21).
         Computes distances for both raw and L2-normalized embeddings.
 
-        For algorithms 2, 3, and 4, when scale_alg_2_3 is True, embeddings are first
+        For algorithms 2 and 3, when scale_alg_2_3 is True, embeddings are first
         min-max scaled to [0, 1] per dimension before L2 normalization.
 
         Args:
             user_ids: List of user IDs.
             description: Description string for print output.
-            scale_alg_2_3: If True, apply [0,1] min-max scaling to algorithms 2, 3, and 4
+            scale_alg_2_3: If True, apply [0,1] min-max scaling to algorithms 2 and 3
                            before L2 normalization.
 
         Returns:
@@ -250,7 +250,7 @@ class CDistanceAnalysis_Baselines_L2:
         print(f"\n  Computing pairwise distances for {description}...")
         print(f"  Users: {len(user_ids)}, Pairs per algorithm: {len(user_ids) * (len(user_ids) - 1) // 2}")
         if scale_alg_2_3:
-            print(f"  [0,1] scaling enabled for Algorithms 2, 3, and 4")
+            print(f"  [0,1] scaling enabled for Algorithms 2 and 3")
 
         raw_cosine = {}
         raw_euclidean = {}
@@ -262,7 +262,7 @@ class CDistanceAnalysis_Baselines_L2:
             MAT_E_raw = self.embeddings_by_alg[alg_id]
 
             # Optionally scale learned embeddings before L2 normalization
-            if scale_alg_2_3 and alg_id in (2, 3, 4):
+            if scale_alg_2_3 and alg_id in (2, 3):
                 MAT_E_scaled = self.scale_to_unit_range(MAT_E_raw)
                 MAT_E_l2 = self.l2_normalize_tensor(MAT_E_scaled)
             else:
@@ -374,7 +374,7 @@ class CDistanceAnalysis_Baselines_L2:
             return
 
         print("\n" + "=" * 80)
-        print("L2-NORMALIZED DISTANCES WITHIN CANARY 1 GROUP (Algorithms 2, 3, 4, 11, 21)")
+        print("L2-NORMALIZED DISTANCES WITHIN CANARY 1 GROUP (Algorithms 2, 3, 11, 21)")
         print("=" * 80)
 
         raw_cos, raw_euc, l2_cos, l2_euc = self._collect_distances_for_all_algorithms(
@@ -397,7 +397,7 @@ class CDistanceAnalysis_Baselines_L2:
             return
 
         print("\n" + "=" * 80)
-        print("L2-NORMALIZED DISTANCES WITHIN CANARY 2 GROUP (Algorithms 2, 3, 4, 11, 21)")
+        print("L2-NORMALIZED DISTANCES WITHIN CANARY 2 GROUP (Algorithms 2, 3, 11, 21)")
         print("=" * 80)
 
         raw_cos, raw_euc, l2_cos, l2_euc = self._collect_distances_for_all_algorithms(
@@ -420,7 +420,7 @@ class CDistanceAnalysis_Baselines_L2:
             return
 
         print("\n" + "=" * 80)
-        print("L2-NORMALIZED DISTANCES FOR ALL USERS (Algorithms 2, 3, 4, 11, 21)")
+        print("L2-NORMALIZED DISTANCES FOR ALL USERS (Algorithms 2, 3, 11, 21)")
         print("=" * 80)
 
         raw_cos, raw_euc, l2_cos, l2_euc = self._collect_distances_for_all_algorithms(
@@ -555,7 +555,7 @@ class CDistanceAnalysis_Baselines_L2:
         - Distances for all users (controlled by include_all_users flag)
 
         All embeddings are L2-normalized to unit length before computing distances.
-        For algorithms 2, 3, and 4, embeddings are optionally min-max scaled to [0, 1]
+        For algorithms 2 and 3, embeddings are optionally min-max scaled to [0, 1]
         per dimension before L2 normalization.
         Distance values are reported as-is (no min-max scaling on distances).
 
@@ -563,12 +563,12 @@ class CDistanceAnalysis_Baselines_L2:
             include_all_users: If True, compute distances for all users
                               (can be very slow for large datasets)
             scale_alg_2_3: If True (default), apply [0,1] min-max scaling to
-                          algorithms 2, 3, and 4 embeddings before L2 normalization.
+                          algorithms 2 and 3 embeddings before L2 normalization.
         """
         print("\n" + "=" * 80)
-        print("   L2-NORMALIZED EMBEDDING BASELINE ANALYSIS (Algorithms 2, 3, 4, 11, 21)")
+        print("   L2-NORMALIZED EMBEDDING BASELINE ANALYSIS (Algorithms 2, 3, 11, 21)")
         if scale_alg_2_3:
-            print("   [0,1] scaling enabled for Algorithms 2, 3, and 4")
+            print("   [0,1] scaling enabled for Algorithms 2 and 3")
         print("=" * 80 + "\n")
 
         # ---- CANARY 1 ----

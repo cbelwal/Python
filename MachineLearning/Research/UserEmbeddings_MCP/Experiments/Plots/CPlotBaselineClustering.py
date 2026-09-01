@@ -1,5 +1,5 @@
 """
-Plotting silhouette scores for baseline clustering analysis across all algorithms (2, 3, 11, 21).
+Plotting silhouette scores across all algorithms (2, 3, 11, 21).
 """
 import os, sys
 # ----------------------------------------------
@@ -13,7 +13,12 @@ from Experiments.Plots.CPlotCommon import CPlotCommon
 from Experiments.ExecuteExperiments.Helpers.CClusteringAnalysis_Baselines_All import CClusteringAnalysis_Baselines_All
 
 class CPlotBaselineClustering:
-    ALG_NAMES = {2: "Algorithm 2", 3: "Algorithm 3", 11: "PCA Baseline", 21: "Raw Tool Counts"}
+    ALG_NAMES = {
+        2: "Algorithm 2",
+        3: "Algorithm 3",
+        11: "PCA Baseline",
+        21: "Raw Tool Counts",
+    }
 
     def __init__(self):
         self.clustering = CClusteringAnalysis_Baselines_All()

@@ -13,8 +13,8 @@ topRootPath = os.path.dirname(
 sys.path.append(topRootPath)
 #----------------------------------------------
 from Algorithms.Alg_1_DataPreparation import Algorithm_1_DataPreparation
-from Algorithms.Alg_2_GenerateUserEmbeddings import Algorithm_2_GenerateUserEmbeddings
-from Algorithms.Alg_3_GenerateUserEmbeddings import Algorithm_3_GenerateUserEmbeddings
+from Algorithms.Alg_2_AutoEncoder import Alg_2_AutoEncoder
+from Algorithms.Alg_3_MatrixFactorization import Alg_3_MatrixFactorization
 from Algorithms.Helpers.IUserToolMatrix import IUserToolMatrix  
 
 from Experiments.ExecuteExperiments.Helpers.CDistanceFunctions import CDistanceFunctions
@@ -56,8 +56,8 @@ class CTestData_Database(IUserToolMatrix):
 # For local testing only
 if __name__== "__main__":
     testData = CTestData_Database()
-    (MAT_E,loss_for_user) = Algorithm_3_GenerateUserEmbeddings(embeddingDimensions=8,
-                                               testData=testData)
+    (MAT_E,loss_for_user) = Alg_3_MatrixFactorization(embeddingDimensions=2,
+                                                     testData=testData)
     
     print("Best losses for each user:", loss_for_user.tolist())
     

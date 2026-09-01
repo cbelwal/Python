@@ -1,5 +1,5 @@
 """
-Embeddings are generated using a Polynomial reduction
+Unused polynomial-reduction embedding implementation.
 
 Since this uses the PyTorch library, the sequence of steps will vary with the paper
 
@@ -19,7 +19,7 @@ from Algorithms.Helpers.IUserToolMatrix import IUserToolMatrix
 
 SCALING_FACTOR = 1.0
 
-def Algorithm_3_GenerateUserEmbeddings(embeddingDimensions:int=8,
+def Alg_5_PolynomialFit(embeddingDimensions:int=8,
                                        testData: IUserToolMatrix = None):
     MAT_u_tau = testData.get_MAT_u_tau()
 

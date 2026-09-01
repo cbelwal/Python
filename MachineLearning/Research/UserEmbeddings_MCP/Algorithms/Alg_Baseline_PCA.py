@@ -31,7 +31,7 @@ def __generate_pca_for_given_values__(values, reduce_to_dim:int=8):
     return pca_components
 
 # Mainly for evaluation baseline via PCA
-def Alg_Baseline_PCA_GenerateUserEmbeddings(embeddingDimensions:int=8,
+def Alg_Baseline_PCA(embeddingDimensions:int=8,
                                        testData: IUserToolMatrix = None):
     MAT_u_tau = testData.get_MAT_u_tau()
 

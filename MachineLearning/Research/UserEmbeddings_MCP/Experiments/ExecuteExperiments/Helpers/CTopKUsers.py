@@ -13,7 +13,7 @@ from Experiments.ExecuteExperiments.Helpers.CResultsStore import CResultsStore
 from Experiments.Database.CDatabaseManager import CDatabaseManager
 
 class CTopKUsers:
-    ALGORITHM_IDS = [2, 3, 4, 11, 21]  # All algorithms including raw baseline
+    ALGORITHM_IDS = [2, 3, 11, 21]  # All active algorithms including baselines
 
     def __init__(self):
         self.dbManager = CDatabaseManager()
