@@ -5,7 +5,7 @@
 #----------------------
 # There is no normalization here. 
 # 
-# For algorithms 2 and 3, we also compute an optional [0,1] min-max scaling of the embeddings before computing distances, 
+# For algorithms 2 and 3, we also compute optional [0,1] min-max scaling before computing distances,
 # to show how much the scale of the original embeddings affects the distance 
 # distributions. For algorithm 11 (PCA baseline) and 21 (raw tool counts), 
 # we only compute raw distances since they are already on a different scale.
@@ -13,6 +13,7 @@
 # This is not used in the main paper, and is used only for comparison purposes.
 
 import math
+import os
 import torch
 import numpy as np
 from typing import Dict, List
@@ -43,7 +44,7 @@ class CDistanceAnalysis_Baselines_NoNorm:
         self.canary_users = self.dbManager.get_canary_users()
         self.all_user_ids = self.dbManager.get_all_user_ids()
 
-        # Load tensor embeddings for algorithms 2, 3, 11
+        # Load tensor embeddings for algorithms 2, 3, and 11
         self.embeddings_by_alg = {}
         for alg_id in self.TENSOR_ALGORITHM_IDS:
             store = CResultsStore(algID=alg_id)
@@ -231,7 +232,7 @@ class CDistanceAnalysis_Baselines_NoNorm:
             raw_cosine[key] = cos_raw
             raw_euclidean[key] = euc_raw
 
-            # Scaled distances for algorithms 2 and 3
+            # Scaled distances for learned embedding algorithms
             if scale_alg_2_3 and alg_id in (2, 3):
                 MAT_E_scaled = self.scale_to_unit_range(MAT_E_raw)
                 cos_scaled, euc_scaled = self.compute_pairwise_distances_for_user_group(

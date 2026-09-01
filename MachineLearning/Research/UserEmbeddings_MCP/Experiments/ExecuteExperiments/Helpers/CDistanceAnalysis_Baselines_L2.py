@@ -34,7 +34,7 @@ class CDistanceAnalysis_Baselines_L2:
         self.canary_users = self.dbManager.get_canary_users()
         self.all_user_ids = self.dbManager.get_all_user_ids()
 
-        # Load tensor embeddings for algorithms 2, 3, 11
+        # Load tensor embeddings for algorithms 2, 3, and 11
         self.embeddings_by_alg = {}
         for alg_id in self.TENSOR_ALGORITHM_IDS:
             store = CResultsStore(algID=alg_id)
@@ -261,7 +261,7 @@ class CDistanceAnalysis_Baselines_L2:
         for alg_id in self.TENSOR_ALGORITHM_IDS:
             MAT_E_raw = self.embeddings_by_alg[alg_id]
 
-            # For algorithms 2 and 3, optionally scale to [0,1] before L2 normalization
+            # Optionally scale learned embeddings before L2 normalization
             if scale_alg_2_3 and alg_id in (2, 3):
                 MAT_E_scaled = self.scale_to_unit_range(MAT_E_raw)
                 MAT_E_l2 = self.l2_normalize_tensor(MAT_E_scaled)

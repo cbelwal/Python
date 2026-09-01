@@ -13,7 +13,7 @@ from Experiments.ExecuteExperiments.Helpers.CResultsStore import CResultsStore
 from Experiments.Database.CDatabaseManager import CDatabaseManager
 
 class CTopKUsers:
-    ALGORITHM_IDS = [2, 3, 11, 21]  # All algorithms including raw baseline
+    ALGORITHM_IDS = [2, 3, 11, 21]  # All active algorithms including baselines
 
     def __init__(self):
         self.dbManager = CDatabaseManager()
@@ -149,7 +149,7 @@ class CTopKUsers:
 
     def find_common_top_k_between_all_algorithms(self, user_id, k):
         """
-        Find and print common top K users across all 4 algorithms (2, 3, 11, 21),
+        Find and print common top K users across all algorithms,
         separately for cosine and euclidean distances.
         """
         if user_id not in self.all_user_ids:

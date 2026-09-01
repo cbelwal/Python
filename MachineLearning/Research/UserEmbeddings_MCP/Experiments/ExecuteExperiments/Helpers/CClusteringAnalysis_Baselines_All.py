@@ -23,7 +23,6 @@ MAX_NUMBER_OF_CLUSTERS = 10
 DEFAULT_NUMBER_OF_CLUSTERS = 3
 
 class CClusteringAnalysis_Baselines_All:
-    # Algorithm IDs: 2, 3 are main algorithms; 11 is PCA baseline; 21 is raw tool counts
     ALGORITHM_IDS = [2, 3, 11, 21]
 
     def __init__(self):
@@ -71,7 +70,12 @@ class CClusteringAnalysis_Baselines_All:
         print("WCSS (Within-Cluster Sum of Squares) FOR OPTIMAL CLUSTER SELECTION")
         print("=" * 70)
 
-        alg_names = {2: "Algorithm 2", 3: "Algorithm 3", 11: "PCA Baseline", 21: "Raw Tool Counts"}
+        alg_names = {
+            2: "Algorithm 2",
+            3: "Algorithm 3",
+            11: "PCA Baseline",
+            21: "Raw Tool Counts",
+        }
 
         for alg_id in self.ALGORITHM_IDS:
             cluster_range, wcss, optimal_clusters = self.compute_wcss(alg_id, max_clusters)
@@ -129,7 +133,12 @@ class CClusteringAnalysis_Baselines_All:
         print("Score interpretation: 1 = well separated, 0 = overlapping, -1 = wrong assignment")
         print("-" * 70)
 
-        alg_names = {2: "Algorithm 2", 3: "Algorithm 3", 11: "PCA Baseline", 21: "Raw Tool Counts"}
+        alg_names = {
+            2: "Algorithm 2",
+            3: "Algorithm 3",
+            11: "PCA Baseline",
+            21: "Raw Tool Counts",
+        }
 
         results = []
         for alg_id in self.ALGORITHM_IDS:

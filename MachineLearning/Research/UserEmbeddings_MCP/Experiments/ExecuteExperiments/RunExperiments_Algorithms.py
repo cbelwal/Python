@@ -9,9 +9,9 @@ sys.path.append(topRootPath)
 #----------------------------------------------
 
 from Algorithms.Alg_1_DataPreparation import Algorithm_1_DataPreparation
-from Algorithms.Alg_2_GenerateUserEmbeddings import  Algorithm_2_GenerateUserEmbeddings
-from Algorithms.Alg_3_GenerateUserEmbeddings import Algorithm_3_GenerateUserEmbeddings
-from Algorithms.Alg_Baseline_PCA_GenerateUserEmbeddings import  Alg_Baseline_PCA_GenerateUserEmbeddings
+from Algorithms.Alg_2_AutoEncoder import Alg_2_AutoEncoder
+from Algorithms.Alg_3_MatrixFactorization import Alg_3_MatrixFactorization
+from Algorithms.Alg_Baseline_PCA import Alg_Baseline_PCA
 
 from Algorithms.Helpers.CDataMain import CDataMain
 from Experiments.CConfig import CConfig
@@ -24,13 +24,15 @@ def run_algorithms_on_synthetic_data(All_C_hat_u:dict,algID:int):
     testData = CDataMain(All_C_hat_u)
     embeddingDimensions = CConfig.EMBEDDING_DIMENSIONS
     if(algID == 2):
-        (MAT_E, loss_for_each_user) = Algorithm_2_GenerateUserEmbeddings(
+        (MAT_E, loss_for_each_user) = Alg_2_AutoEncoder(
                 embeddingDimensions=embeddingDimensions,
                 testData=testData)
     elif(algID == 3):
-        (MAT_E, loss_for_each_user) = Algorithm_3_GenerateUserEmbeddings(
+        (MAT_E, loss_for_each_user) = Alg_3_MatrixFactorization(
                 embeddingDimensions=embeddingDimensions,
                 testData=testData)
+    else:
+        raise ValueError(f"Unsupported algorithm ID: {algID}")
     print(f"Generated Embeddings with Algorithm {algID}") 
     return (MAT_E, loss_for_each_user)
 
@@ -38,7 +40,7 @@ def run_pca_on_synthetic_data(All_C_hat_u:dict,algID:int):
     testData = CDataMain(All_C_hat_u)
     embeddingDimensions = CConfig.EMBEDDING_DIMENSIONS
    
-    (MAT_E, loss_for_each_user) = Alg_Baseline_PCA_GenerateUserEmbeddings(
+    (MAT_E, loss_for_each_user) = Alg_Baseline_PCA(
                 embeddingDimensions=embeddingDimensions,
                 testData=testData)
     print(f"Generated Embeddings with PCA") 
@@ -62,8 +64,7 @@ if __name__== "__main__":
     # Step 1: Data Preparation
     All_C_hat_u = Algorithm_1_DataPreparation()
 
-    # Run algorithm 2
-    algorithmsIds = [2,3]
+    algorithmsIds = [2, 3]
     for algID in algorithmsIds:
         print(f"Computing embeddings for Algorithm {algID}...")
         (MAT_E, loss_for_each_user) = \
