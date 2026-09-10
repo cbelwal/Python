@@ -149,12 +149,13 @@ pip install -r requirements.txt
 UserEmbeddings_MCP/
 │
 ├── Algorithms/                          # Core algorithm implementations
+│   ├── README.md                        # Algorithm contracts and usage
 │   ├── Alg_1_DataPreparation.py         # Step 1: Normalize raw interaction data
 │   ├── Alg_2_AutoEncoder.py             # Step 2a: Shared autoencoder embeddings
 │   ├── Alg_3_MatrixFactorization.py     # Step 2b: Truncated-SVD embeddings
 │   ├── Alg_Baseline_PCA.py              # PCA baseline
 │   ├── Alg_Data_Raw.py                  # Raw (unnormalized) data extraction
-│   ├── unused/                           # Retired algorithm implementations
+│   ├── Unused/                           # Retired algorithm implementations
 │   └── Helpers/
 │       ├── IUserToolMatrix.py           # Abstract interface for data matrices
 │       ├── CDataMain.py                 # Converts dict → PyTorch tensor matrix
@@ -204,6 +205,9 @@ UserEmbeddings_MCP/
 ├── requirements.txt
 └── README.md
 ```
+
+See [`Algorithms/README.md`](Algorithms/README.md) for the active algorithm
+contracts, output formats, tuning parameters, and test commands.
 
 ---
 
