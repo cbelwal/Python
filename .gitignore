@@ -8,3 +8,4 @@ MachineLearning/ReferenceCode/NLP/Transformers/training_dir/**
 MachineLearning/ReferenceCode/NLP/Transformers/TransformersDP/Decoder/__pycache__/CDP_SGD.cpython-311.pyc
 MachineLearning/ReferenceCode/NLP/Transformers/TransformersDP/Decoder/__pycache__/Decoder.cpython-311.pyc
 MachineLearning/Research/UserEmbeddings_MCP/Experiments/Data/**
+MachineLearning/Research/AgentEmbeddings_MCP_Count/Experiments/Data/**
